@@ -13,20 +13,24 @@ interface PageProps {
 export default async function TemplatePreviewPage({ params }: PageProps) {
     const { slug } = await params;
 
-    const template = await getTemplateBySlug(slug);    
+    const template = await getTemplateBySlug(slug);
+    console.log("TEMPLATE LOADED:", template);
+
     if (!template) notFound();
 
-    // FIX: Ensure JSON from DB is parsed
+    // Parse components array (fallback for old templates)
     const components = Array.isArray(template.components)
         ? template.components
         : JSON.parse(template.components || "[]");
 
+    // Parse fake content (preview props)
     const fakeContent = typeof template.fake_content === "object"
         ? template.fake_content
         : JSON.parse(template.fake_content || "{}");
 
     return (
         <div className="min-h-screen bg-white dark:bg-zinc-950 flex flex-col">
+            
             {/* Top Bar */}
             <div className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
                 <div className="container flex h-14 items-center justify-between">
@@ -52,8 +56,9 @@ export default async function TemplatePreviewPage({ params }: PageProps) {
             {/* Template Preview */}
             <div className="flex-1">
                 <RenderTemplate
-                    components={components}
-                    data={fakeContent}
+                    html_template={template.html_template}   // ✅ REQUIRED
+                    components={components}                 // fallback system
+                    data={fakeContent}                      // placeholder props
                     showBranding={true}
                 />
             </div>

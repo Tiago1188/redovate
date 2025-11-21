@@ -135,7 +135,8 @@ CREATE TABLE IF NOT EXISTS templates(
     status template_status_enum DEFAULT 'active',
     created_at TIMESTAMP DEFAULT now(),
     updated_at TIMESTAMP DEFAULT now(),
-    fake_content JSONB DEFAULT '{}'::jsonb
+    fake_content JSONB DEFAULT '{}'::jsonb,
+    html_template TEXT,
 );
 
 -- ===================================
