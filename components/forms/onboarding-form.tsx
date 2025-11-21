@@ -319,10 +319,10 @@ export function OnboardingForm({ initialPlanType = null }: OnboardingFormProps) 
                         <Sparkles className="h-6 w-6 text-white" />
                     </div>
                     <h2 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-white">
-                        Let's Set Up Your AI Assistant
+                        Let&apos;s Set Up Your AI Assistant
                     </h2>
                     <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-                        We'll use this information to generate personalized content for your business.
+                        We&apos;ll use this information to generate personalized content for your business.
                     </p>
                 </div>
 
@@ -545,7 +545,7 @@ export function OnboardingForm({ initialPlanType = null }: OnboardingFormProps) 
                                         Your Services
                                     </h3>
                                     <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-                                        What services do you offer? We'll help describe them beautifully.
+                                        What services do you offer? We&apos;ll help describe them beautifully.
                                         {planLimits && (
                                             <span className="block mt-1">
                                                 {formValues.services?.length || 0} / {planLimits.maxServices} services
@@ -587,7 +587,7 @@ export function OnboardingForm({ initialPlanType = null }: OnboardingFormProps) 
                                                         Service limit reached
                                                     </p>
                                                     <p className="mt-1 text-xs text-yellow-700 dark:text-yellow-300">
-                                                        You've reached the maximum of {planLimits.maxServices} services for your plan. Upgrade to add more services.
+                                                        You&apos;ve reached the maximum of {planLimits.maxServices} services for your plan. Upgrade to add more services.
                                                     </p>
                                                 </div>
                                             </div>
@@ -833,7 +833,7 @@ export function OnboardingForm({ initialPlanType = null }: OnboardingFormProps) 
                                                                 Service area limit reached
                                                             </p>
                                                             <p className="mt-1 text-xs text-yellow-700 dark:text-yellow-300">
-                                                                You've reached the maximum of {planLimits.maxServiceAreas} service areas for your plan.
+                                                                You&apos;ve reached the maximum of {planLimits.maxServiceAreas} service areas for your plan.
                                                             </p>
                                                         </div>
                                                     </div>
@@ -896,7 +896,7 @@ export function OnboardingForm({ initialPlanType = null }: OnboardingFormProps) 
                 </form>
 
                 <p className="text-center text-xs text-zinc-500 dark:text-zinc-400">
-                    Don't worry - you can always edit this information later.
+                    Don&apos;t worry - you can always edit this information later.
                 </p>
             </div>
         </div>

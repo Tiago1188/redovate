@@ -23,7 +23,7 @@ export function EmptyState({ businessName }: EmptyStateProps) {
             {businessName ? `Welcome to ${businessName}!` : "Welcome to your Dashboard!"}
           </h2>
           <p className="text-zinc-600 dark:text-zinc-400">
-            Your website content is being generated. Once ready, you'll see your sections, analytics, and data here.
+            Your website content is being generated. Once ready, you&apos;ll see your sections, analytics, and data here.
           </p>
         </div>
 
