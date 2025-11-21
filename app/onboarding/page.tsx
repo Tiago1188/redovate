@@ -2,10 +2,12 @@
 
 import { CheckCircle, User, Building2, Loader2 } from "lucide-react";
 import { completeOnboarding } from "@/actions/onboarding";
-import { useTransition } from "react";
+import { useTransition, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useUser } from "@clerk/nextjs";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 
 const accountTypes = [
     {
@@ -25,6 +27,14 @@ const accountTypes = [
 export default function OnboardingPage() {
     const [isPending, startTransition] = useTransition();
     const router = useRouter();
+    const { user, isLoaded } = useUser();
+
+    // Redirect to dashboard if user already has a businessId
+    useEffect(() => {
+        if (isLoaded && user?.publicMetadata?.businessId) {
+            router.push("/dashboard");
+        }
+    }, [isLoaded, user, router]);
 
     const handleSubmit = (formData: FormData) => {
         startTransition(async () => {
@@ -54,9 +64,9 @@ export default function OnboardingPage() {
                 </div>
 
                 <form action={handleSubmit} className="space-y-8">
-                    <fieldset>
-                        <legend className="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-4">Account type</legend>
-                        <div className="space-y-4">
+                    <div className="space-y-4">
+                        <Label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Account type</Label>
+                        <div className="space-y-3">
                             {accountTypes.map((type) => (
                                 <label
                                     key={type.id}
@@ -75,14 +85,14 @@ export default function OnboardingPage() {
                                         <span className="flex flex-col">
                                             <span
                                                 id={`${type.id}-label`}
-                                                className="flex items-center gap-2 block text-sm font-medium text-zinc-900 dark:text-white"
+                                                className="flex items-center gap-2 text-sm font-medium text-zinc-900 dark:text-white"
                                             >
                                                 <type.icon className="h-5 w-5 text-zinc-500 dark:text-zinc-400" />
                                                 {type.title}
                                             </span>
                                             <span
                                                 id={`${type.id}-description`}
-                                                className="mt-1 flex items-center text-sm text-zinc-500 dark:text-zinc-400"
+                                                className="mt-1 text-sm text-zinc-500 dark:text-zinc-400"
                                             >
                                                 {type.description}
                                             </span>
@@ -99,23 +109,21 @@ export default function OnboardingPage() {
                                 </label>
                             ))}
                         </div>
-                    </fieldset>
-                    <div className="flex justify-end">
-                        <Button
-                            type="submit"
-                            disabled={isPending}
-                            className="w-full bg-indigo-600 hover:bg-indigo-500 text-white"
-                        >
-                            {isPending ? (
-                                <>
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    Setting up...
-                                </>
-                            ) : (
-                                "Complete Setup"
-                            )}
-                        </Button>
                     </div>
+                    <Button
+                        type="submit"
+                        disabled={isPending}
+                        className="w-full bg-indigo-600 hover:bg-indigo-500 text-white"
+                    >
+                        {isPending ? (
+                            <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Setting up...
+                            </>
+                        ) : (
+                            "Complete Setup"
+                        )}
+                    </Button>
                 </form>
             </div>
         </div>
