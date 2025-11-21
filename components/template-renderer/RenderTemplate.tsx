@@ -11,10 +11,17 @@ export const SECTION_MAP = {
   listings: ListingsSection,
   testimonials: TestimonialsSection,
   contact: ContactSection,
-};
+} as const;
+
+type SectionType = keyof typeof SECTION_MAP;
+
+interface SectionComponent {
+  type: SectionType;
+  [key: string]: any;
+}
 
 interface RenderTemplateProps {
-  components?: any[];
+  components?: SectionComponent[];
   data?: any;
   showBranding?: boolean;
 }
@@ -27,10 +34,11 @@ export default function RenderTemplate({
   return (
     <TemplatePageWrapper>
       {components.map((section, i) => {
-        const Component = SECTION_MAP[section.type];
+        const sectionType = section.type as SectionType;
+        const Component = SECTION_MAP[sectionType];
         if (!Component) return null;
 
-        return <Component key={i} data={data[section.type]} />;
+        return <Component key={i} data={data[sectionType]} />;
       })}
 
       {showBranding && (
