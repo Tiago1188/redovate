@@ -14,67 +14,67 @@ const isPlansRoute = createRouteMatcher(["/plans"]);
 const isDashboardRoute = createRouteMatcher(["/dashboard(.*)"]);
 
 export default clerkMiddleware(async (auth, req) => {
-  const { userId, sessionClaims } = await auth();
+  const { userId } = await auth();
 
   // If user is not signed in and trying to access a protected route, redirect to sign in
   if (!userId && !isPublicRoute(req)) {
     return (await auth()).redirectToSignIn({ returnBackUrl: req.url });
   }
 
-  if (userId) {
-    // Check if user has selected a plan
-    // Allow access to plans page, onboarding, generating, and public routes
-    const allowedRoutesWithoutPlan = isPlansRoute(req) || isOnboardingRoute(req) || isGeneratingRoute(req) || isPublicRoute(req);
-    
-    if (!allowedRoutesWithoutPlan) {
-      const userHasSelectedPlan = await hasSelectedPlan(userId);
-      
-      if (!userHasSelectedPlan) {
-        // User hasn't selected a plan, redirect to plans page
-        const plansUrl = new URL("/plans", req.url);
-        return NextResponse.redirect(plansUrl);
-      }
+    if (userId) {
+        // Check if user has selected a plan
+        // Allow access to plans page, onboarding, generating, and public routes
+        const allowedRoutesWithoutPlan = isPlansRoute(req) || isOnboardingRoute(req) || isGeneratingRoute(req) || isPublicRoute(req);
+        
+        if (!allowedRoutesWithoutPlan) {
+            const userHasSelectedPlan = await hasSelectedPlan(userId);
+            
+            if (!userHasSelectedPlan) {
+                // User hasn't selected a plan, redirect to plans page
+                const plansUrl = new URL("/plans", req.url);
+                return NextResponse.redirect(plansUrl);
+            }
+        }
+
+        // Check onboarding status from database (most reliable source)
+        // This handles cases where Clerk session metadata hasn't refreshed yet
+        const onboardingStatus = await getUserOnboardingStatus(userId);
+
+        // For dashboard route, check if user has completed onboarding
+        if (isDashboardRoute(req)) {
+            if (onboardingStatus.hasValidAccountType) {
+                // User has valid account type, allow access to dashboard
+                return;
+            } else {
+                // User doesn't have valid account type, redirect to onboarding
+                const onboardingUrl = new URL("/onboarding", req.url);
+                return NextResponse.redirect(onboardingUrl);
+            }
+        }
+
+        // For onboarding route, check if user has already completed onboarding
+        if (isOnboardingRoute(req)) {
+            if (onboardingStatus.hasValidAccountType) {
+                // User has already completed onboarding, redirect to dashboard
+                const dashboardUrl = new URL("/dashboard", req.url);
+                return NextResponse.redirect(dashboardUrl);
+            } else {
+                // User hasn't completed onboarding, allow access to onboarding page
+                return;
+            }
+        }
+
+        // For other protected routes, check if user has completed onboarding
+        // Allow access to generating page (users who just completed onboarding)
+        // Allow access to plans page (users selecting plan)
+        if (!isGeneratingRoute(req) && !isPlansRoute(req) && !isPublicRoute(req)) {
+            if (!onboardingStatus.hasValidAccountType) {
+                // User hasn't completed onboarding, redirect to onboarding
+                const onboardingUrl = new URL("/onboarding", req.url);
+                return NextResponse.redirect(onboardingUrl);
+            }
+        }
     }
-
-    // For dashboard route, check database to ensure we have the latest data
-    // This handles cases where Clerk session metadata hasn't refreshed yet
-    if (isDashboardRoute(req)) {
-      const onboardingStatus = await getUserOnboardingStatus(userId);
-      if (onboardingStatus.hasValidAccountType) {
-        // User has valid account type, allow access to dashboard
-        return;
-      } else {
-        // User doesn't have valid account type, redirect to onboarding
-        const onboardingUrl = new URL("/onboarding", req.url);
-        return NextResponse.redirect(onboardingUrl);
-      }
-    }
-
-    // For other routes, use Clerk session metadata (faster)
-    const businessId = sessionClaims?.publicMetadata?.businessId as string | undefined;
-    const businessType = sessionClaims?.publicMetadata?.businessType as string | undefined;
-
-    // User has valid account type if they have a businessId and valid businessType
-    const hasValidAccountType = !!(
-      businessId && 
-      (businessType === 'sole_trader' || businessType === 'company')
-    );
-
-    // If user has a valid account type and is on onboarding page, redirect to dashboard
-    if (hasValidAccountType && isOnboardingRoute(req)) {
-      const dashboardUrl = new URL("/dashboard", req.url);
-      return NextResponse.redirect(dashboardUrl);
-    }
-
-    // If user does NOT have a valid account type, redirect to onboarding
-    // This includes: no businessId, no businessType, or invalid businessType
-    // Allow access to generating page (users who just completed onboarding)
-    // Allow access to plans page (users selecting plan)
-    if (!hasValidAccountType && !isOnboardingRoute(req) && !isGeneratingRoute(req) && !isPlansRoute(req) && !isPublicRoute(req)) {
-      const onboardingUrl = new URL("/onboarding", req.url);
-      return NextResponse.redirect(onboardingUrl);
-    }
-  }
 });
 
 export const config = {
