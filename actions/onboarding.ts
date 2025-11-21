@@ -3,6 +3,8 @@
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import pool from "@/lib/db";
 import { onboardingSchema } from "@/validations/onboarding";
+import { getStarterPlanCount, getUserPlanType } from "@/actions/user";
+import { getPlanLimits, type PlanType } from "@/lib/plan-limits";
 
 export async function completeOnboarding(formData: FormData) {
     const { userId } = await auth();
@@ -51,6 +53,46 @@ export async function completeOnboarding(formData: FormData) {
     }
 
     const validatedData = validationResult.data;
+
+    // Get user's plan type and validate against plan limits
+    const userPlanType = await getUserPlanType(userId);
+    const planType: PlanType = userPlanType || 'free'; // Default to free if not found
+    const planLimits = getPlanLimits(planType);
+
+    // Validate services against plan limit
+    if (validatedData.services.length > planLimits.maxServices && planLimits.maxServices < 999) {
+        return {
+            success: false,
+            error: `Plan limit exceeded: You can only add up to ${planLimits.maxServices} services on the ${planType} plan. Please remove some services or upgrade your plan.`,
+            errors: [{
+                field: 'services',
+                message: `Maximum ${planLimits.maxServices} services allowed on ${planType} plan`
+            }]
+        };
+    }
+
+    // Validate service areas against plan limit
+    if (planLimits.maxServiceAreas === 0 && validatedData.serviceAreas.length > 0) {
+        return {
+            success: false,
+            error: `Plan limit: Service areas are not available on the ${planType} plan. Only the main location is allowed.`,
+            errors: [{
+                field: 'serviceAreas',
+                message: 'Service areas are not available on the free plan. Upgrade to add multiple service areas.'
+            }]
+        };
+    }
+
+    if (validatedData.serviceAreas.length > planLimits.maxServiceAreas && planLimits.maxServiceAreas < 999) {
+        return {
+            success: false,
+            error: `Plan limit exceeded: You can only add up to ${planLimits.maxServiceAreas} service areas on the ${planType} plan.`,
+            errors: [{
+                field: 'serviceAreas',
+                message: `Maximum ${planLimits.maxServiceAreas} service areas allowed on ${planType} plan`
+            }]
+        };
+    }
 
     const client = await clerkClient();
     const user = await client.users.getUser(userId);
@@ -162,6 +204,24 @@ export async function completeOnboarding(formData: FormData) {
                 ]
             );
             businessId = businessRes.rows[0].id;
+        }
+
+        // Track starter plan users who completed onboarding
+        // Check if user has starter plan and if they're within the first 500 (grandfathered)
+        const userPlanRes = await pool.query(
+            `SELECT plan_type FROM users WHERE clerk_id = $1`,
+            [userId]
+        );
+        const userPlanType = userPlanRes.rows[0]?.plan_type;
+
+        if (userPlanType === 'starter') {
+            // Count how many starter users have completed onboarding (have a business)
+            const starterCount = await getStarterPlanCount();
+            // Users within first 500 are grandfathered (no action needed now, just tracked)
+            // We can check this later when implementing payment logic
+            if (starterCount <= 500) {
+                console.log(`User ${userId} is within first 500 starter users (count: ${starterCount})`);
+            }
         }
 
         // Update Clerk Metadata

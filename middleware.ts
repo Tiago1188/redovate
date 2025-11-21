@@ -1,6 +1,6 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-import { getUserOnboardingStatus } from "@/actions/user";
+import { getUserOnboardingStatus, hasSelectedPlan } from "@/actions/user";
 
 const isPublicRoute = createRouteMatcher([
   "/sign-in(.*)",
@@ -10,6 +10,7 @@ const isPublicRoute = createRouteMatcher([
 
 const isOnboardingRoute = createRouteMatcher(["/onboarding"]);
 const isGeneratingRoute = createRouteMatcher(["/generating"]);
+const isPlansRoute = createRouteMatcher(["/plans"]);
 const isDashboardRoute = createRouteMatcher(["/dashboard(.*)"]);
 
 export default clerkMiddleware(async (auth, req) => {
@@ -21,6 +22,20 @@ export default clerkMiddleware(async (auth, req) => {
   }
 
   if (userId) {
+    // Check if user has selected a plan
+    // Allow access to plans page, onboarding, generating, and public routes
+    const allowedRoutesWithoutPlan = isPlansRoute(req) || isOnboardingRoute(req) || isGeneratingRoute(req) || isPublicRoute(req);
+    
+    if (!allowedRoutesWithoutPlan) {
+      const userHasSelectedPlan = await hasSelectedPlan(userId);
+      
+      if (!userHasSelectedPlan) {
+        // User hasn't selected a plan, redirect to plans page
+        const plansUrl = new URL("/plans", req.url);
+        return NextResponse.redirect(plansUrl);
+      }
+    }
+
     // For dashboard route, check database to ensure we have the latest data
     // This handles cases where Clerk session metadata hasn't refreshed yet
     if (isDashboardRoute(req)) {
@@ -54,7 +69,8 @@ export default clerkMiddleware(async (auth, req) => {
     // If user does NOT have a valid account type, redirect to onboarding
     // This includes: no businessId, no businessType, or invalid businessType
     // Allow access to generating page (users who just completed onboarding)
-    if (!hasValidAccountType && !isOnboardingRoute(req) && !isGeneratingRoute(req) && !isPublicRoute(req)) {
+    // Allow access to plans page (users selecting plan)
+    if (!hasValidAccountType && !isOnboardingRoute(req) && !isGeneratingRoute(req) && !isPlansRoute(req) && !isPublicRoute(req)) {
       const onboardingUrl = new URL("/onboarding", req.url);
       return NextResponse.redirect(onboardingUrl);
     }

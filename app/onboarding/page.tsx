@@ -6,9 +6,11 @@ import { useUser } from "@clerk/nextjs";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { CheckCircle, User, Building2, Loader2, ArrowLeft, ArrowRight, Sparkles, X, Pencil } from "lucide-react";
+import { CheckCircle, User, Building2, Loader2, ArrowLeft, ArrowRight, Sparkles, X, Pencil, AlertCircle } from "lucide-react";
 import { completeOnboarding } from "@/actions/onboarding";
 import { onboardingFormSchema, type OnboardingFormInput } from "@/validations/onboarding";
+import { getUserPlanType } from "@/actions/user";
+import { getPlanLimits, type PlanType } from "@/lib/plan-limits";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -52,6 +54,10 @@ export default function OnboardingPage() {
     const router = useRouter();
     const { user, isLoaded } = useUser();
 
+    // Plan type state
+    const [planType, setPlanType] = useState<PlanType | null>(null);
+    const [planLimits, setPlanLimits] = useState<ReturnType<typeof getPlanLimits> | null>(null);
+
     // Local state for temporary inputs (not part of final form)
     const [currentService, setCurrentService] = useState("");
     const [currentServiceArea, setCurrentServiceArea] = useState("");
@@ -93,9 +99,39 @@ export default function OnboardingPage() {
         }
     }, [isLoaded, user, router]);
 
+    // Fetch user's plan type
+    useEffect(() => {
+        if (isLoaded && user?.id) {
+            getUserPlanType(user.id)
+                .then((plan) => {
+                    if (plan) {
+                        setPlanType(plan);
+                        setPlanLimits(getPlanLimits(plan));
+                    } else {
+                        // Default to free if no plan found
+                        setPlanType('free');
+                        setPlanLimits(getPlanLimits('free'));
+                    }
+                })
+                .catch((error) => {
+                    console.error('Error fetching plan type:', error);
+                    // Default to free on error
+                    setPlanType('free');
+                    setPlanLimits(getPlanLimits('free'));
+                });
+        }
+    }, [isLoaded, user]);
+
     const addService = () => {
         if (currentService.trim()) {
             const currentServices = formValues.services || [];
+            
+            // Check plan limit
+            if (planLimits && currentServices.length >= planLimits.maxServices) {
+                toast.error(`You've reached the maximum of ${planLimits.maxServices} services for your plan. Upgrade to add more services.`);
+                return;
+            }
+            
             setValue("services", [...currentServices, currentService.trim()], { shouldValidate: true });
             setCurrentService("");
         }
@@ -130,8 +166,21 @@ export default function OnboardingPage() {
     };
 
     const addServiceArea = () => {
+        // Check if service areas are allowed for this plan
+        if (planLimits && planLimits.maxServiceAreas === 0) {
+            toast.error("Service areas are not available on the free plan. Upgrade to add multiple service areas.");
+            return;
+        }
+        
         if (currentServiceArea.trim()) {
             const currentAreas = formValues.serviceAreas || [];
+            
+            // Check plan limit
+            if (planLimits && currentAreas.length >= planLimits.maxServiceAreas) {
+                toast.error(`You've reached the maximum of ${planLimits.maxServiceAreas} service areas for your plan.`);
+                return;
+            }
+            
             setValue("serviceAreas", [...currentAreas, currentServiceArea.trim()], { shouldValidate: true });
             setCurrentServiceArea("");
         }
@@ -498,6 +547,12 @@ export default function OnboardingPage() {
                                     </h3>
                                     <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
                                         What services do you offer? We'll help describe them beautifully.
+                                        {planLimits && (
+                                            <span className="block mt-1">
+                                                {formValues.services?.length || 0} / {planLimits.maxServices} services
+                                                {planLimits.maxServices >= 999 ? " (unlimited)" : ""}
+                                            </span>
+                                        )}
                                     </p>
                                 </div>
                                 <div className="space-y-4">
@@ -513,11 +568,32 @@ export default function OnboardingPage() {
                                                 }
                                             }}
                                             className="flex-1"
+                                            disabled={planLimits ? (formValues.services?.length || 0) >= planLimits.maxServices : false}
                                         />
-                                        <Button type="button" onClick={addService} variant="outline">
+                                        <Button 
+                                            type="button" 
+                                            onClick={addService} 
+                                            variant="outline"
+                                            disabled={planLimits ? (formValues.services?.length || 0) >= planLimits.maxServices : false}
+                                        >
                                             Add
                                         </Button>
                                     </div>
+                                    {planLimits && (formValues.services?.length || 0) >= planLimits.maxServices && planLimits.maxServices < 999 && (
+                                        <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-3 dark:border-yellow-800 dark:bg-yellow-950">
+                                            <div className="flex items-start gap-2">
+                                                <AlertCircle className="mt-0.5 h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+                                                <div>
+                                                    <p className="text-sm font-medium text-yellow-900 dark:text-yellow-100">
+                                                        Service limit reached
+                                                    </p>
+                                                    <p className="mt-1 text-xs text-yellow-700 dark:text-yellow-300">
+                                                        You've reached the maximum of {planLimits.maxServices} services for your plan. Upgrade to add more services.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
                                     {errors.services && (
                                         <p className="text-sm text-red-500">{errors.services.message}</p>
                                     )}
@@ -633,31 +709,57 @@ export default function OnboardingPage() {
                                             Your primary city or suburb.
                                         </p>
                                     </div>
-                                    <div>
-                                        <Label htmlFor="service-areas" className="text-sm font-medium">
-                                            Service Areas
-                                        </Label>
-                                        <div className="mt-1 flex gap-2">
-                                            <Input
-                                                id="service-areas"
-                                                placeholder="Add suburbs you service"
-                                                value={currentServiceArea}
-                                                onChange={(e) => setCurrentServiceArea(e.target.value)}
-                                                onKeyDown={(e) => {
-                                                    if (e.key === "Enter") {
-                                                        e.preventDefault();
-                                                        addServiceArea();
-                                                    }
-                                                }}
-                                                className="flex-1"
-                                            />
-                                            <Button type="button" onClick={addServiceArea} variant="outline">
-                                                Add
-                                            </Button>
+                                    {planLimits && planLimits.maxServiceAreas === 0 ? (
+                                        <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900">
+                                            <div className="flex items-start gap-2">
+                                                <AlertCircle className="mt-0.5 h-4 w-4 text-zinc-600 dark:text-zinc-400" />
+                                                <div>
+                                                    <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                                                        Multiple service areas not available
+                                                    </p>
+                                                    <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+                                                        Service areas are only available on paid plans. On the free plan, you can only add your main business location.
+                                                    </p>
+                                                </div>
+                                            </div>
                                         </div>
-                                        {errors.serviceAreas && (
-                                            <p className="mt-1 text-xs text-red-500">{errors.serviceAreas.message}</p>
-                                        )}
+                                    ) : (
+                                        <div>
+                                            <Label htmlFor="service-areas" className="text-sm font-medium">
+                                                Service Areas
+                                                {planLimits && planLimits.maxServiceAreas > 0 && (
+                                                    <span className="ml-2 text-xs font-normal text-zinc-500 dark:text-zinc-400">
+                                                        ({formValues.serviceAreas?.length || 0} / {planLimits.maxServiceAreas >= 999 ? "unlimited" : planLimits.maxServiceAreas})
+                                                    </span>
+                                                )}
+                                            </Label>
+                                            <div className="mt-1 flex gap-2">
+                                                <Input
+                                                    id="service-areas"
+                                                    placeholder="Add suburbs you service"
+                                                    value={currentServiceArea}
+                                                    onChange={(e) => setCurrentServiceArea(e.target.value)}
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === "Enter") {
+                                                            e.preventDefault();
+                                                            addServiceArea();
+                                                        }
+                                                    }}
+                                                    className="flex-1"
+                                                    disabled={planLimits ? (formValues.serviceAreas?.length || 0) >= planLimits.maxServiceAreas && planLimits.maxServiceAreas < 999 : false}
+                                                />
+                                                <Button 
+                                                    type="button" 
+                                                    onClick={addServiceArea} 
+                                                    variant="outline"
+                                                    disabled={planLimits ? (formValues.serviceAreas?.length || 0) >= planLimits.maxServiceAreas && planLimits.maxServiceAreas < 999 : false}
+                                                >
+                                                    Add
+                                                </Button>
+                                            </div>
+                                            {errors.serviceAreas && (
+                                                <p className="mt-1 text-xs text-red-500">{errors.serviceAreas.message}</p>
+                                            )}
                                         {(formValues.serviceAreas?.length || 0) > 0 && (
                                             <div className="mt-2 flex flex-wrap gap-2">
                                                 {formValues.serviceAreas?.map((area, index) => (
@@ -723,10 +825,28 @@ export default function OnboardingPage() {
                                                 ))}
                                             </div>
                                         )}
-                                        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                                            Add multiple areas to improve local search visibility.
-                                        </p>
-                                    </div>
+                                            {planLimits && (formValues.serviceAreas?.length || 0) >= planLimits.maxServiceAreas && planLimits.maxServiceAreas < 999 && (
+                                                <div className="mt-2 rounded-lg border border-yellow-200 bg-yellow-50 p-3 dark:border-yellow-800 dark:bg-yellow-950">
+                                                    <div className="flex items-start gap-2">
+                                                        <AlertCircle className="mt-0.5 h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+                                                        <div>
+                                                            <p className="text-xs font-medium text-yellow-900 dark:text-yellow-100">
+                                                                Service area limit reached
+                                                            </p>
+                                                            <p className="mt-1 text-xs text-yellow-700 dark:text-yellow-300">
+                                                                You've reached the maximum of {planLimits.maxServiceAreas} service areas for your plan.
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                            {(!planLimits || planLimits.maxServiceAreas > 0) && (
+                                                <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                                                    Add multiple areas to improve local search visibility.
+                                                </p>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         )}
