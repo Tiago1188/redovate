@@ -11,23 +11,52 @@ export async function completeOnboarding(formData: FormData) {
         throw new Error("Unauthorized");
     }
 
+    // Extract form data
+    const services: string[] = [];
+    const serviceAreas: string[] = [];
+    
+    formData.forEach((value, key) => {
+        if (key === 'services[]') {
+            services.push(value.toString());
+        } else if (key === 'service-areas[]') {
+            serviceAreas.push(value.toString());
+        }
+    });
+
     const rawData = {
         accountType: formData.get("account-type"),
+        businessName: formData.get("business-name"),
+        about: formData.get("about"),
+        category: formData.get("category"),
+        yearFounded: formData.get("year-founded") || undefined,
+        services: services,
+        mainLocation: formData.get("main-location"),
+        serviceAreas: serviceAreas,
+        colorStyle: formData.get("color-style") || "default",
     };
 
-    const validatedData = onboardingSchema.parse(rawData);
+    // Validate data with better error handling
+    const validationResult = onboardingSchema.safeParse(rawData);
+    
+    if (!validationResult.success) {
+        const errors = validationResult.error.errors.map(err => ({
+            field: err.path.join('.'),
+            message: err.message,
+        }));
+        return { 
+            success: false, 
+            error: "Validation failed",
+            errors 
+        };
+    }
+
+    const validatedData = validationResult.data;
 
     const client = await clerkClient();
     const user = await client.users.getUser(userId);
 
-    // Generate a default business name since we removed the input
-    // e.g. "Tiago's Business" or just "My Business" if name is missing
-    const defaultBusinessName = user.firstName
-        ? `${user.firstName}'s Business`
-        : "My Business";
-
-    // Generate a simple slug
-    const slug = defaultBusinessName
+    // Generate a slug from business name
+    const slug = validatedData.businessName
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/(^-|-$)+/g, "") + "-" + Math.floor(Math.random() * 10000);
@@ -58,20 +87,79 @@ export async function completeOnboarding(formData: FormData) {
 
         let businessId: string;
 
+        // Prepare theme object with color style
+        const theme = {
+            colorStyle: validatedData.colorStyle,
+        };
+
+        // Prepare locations array (main location as primary)
+        const locations = validatedData.mainLocation ? [{
+            primary: true,
+            location: validatedData.mainLocation,
+        }] : [];
+
         if (existingBusinessRes.rows.length > 0) {
             // Update existing business
             businessId = existingBusinessRes.rows[0].id;
             await pool.query(
-                `UPDATE businesses SET business_type = $1, updated_at = now() WHERE id = $2`,
-                [validatedData.accountType, businessId]
+                `UPDATE businesses 
+                 SET business_name = $1, 
+                     slug = $2, 
+                     business_type = $3,
+                     about = $4,
+                     category = $5,
+                     year_founded = $6,
+                     services = $7,
+                     locations = $8,
+                     service_areas = $9,
+                     theme = $10,
+                     updated_at = now()
+                 WHERE id = $11`,
+                [
+                    validatedData.businessName,
+                    slug,
+                    validatedData.accountType,
+                    validatedData.about,
+                    validatedData.category,
+                    validatedData.yearFounded, // This is now number | null
+                    JSON.stringify(validatedData.services),
+                    JSON.stringify(locations),
+                    JSON.stringify(validatedData.serviceAreas),
+                    JSON.stringify(theme),
+                    businessId,
+                ]
             );
         } else {
             // Create new business
             const businessRes = await pool.query(
-                `INSERT INTO businesses (user_id, business_name, slug, business_type)
-         VALUES ($1, $2, $3, $4)
-         RETURNING id`,
-                [internalUserId, defaultBusinessName, slug, validatedData.accountType]
+                `INSERT INTO businesses (
+                    user_id, 
+                    business_name, 
+                    slug, 
+                    business_type,
+                    about,
+                    category,
+                    year_founded,
+                    services,
+                    locations,
+                    service_areas,
+                    theme
+                )
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+                RETURNING id`,
+                [
+                    internalUserId,
+                    validatedData.businessName,
+                    slug,
+                    validatedData.accountType,
+                    validatedData.about,
+                    validatedData.category,
+                    validatedData.yearFounded, // This is now number | null
+                    JSON.stringify(validatedData.services),
+                    JSON.stringify(locations),
+                    JSON.stringify(validatedData.serviceAreas),
+                    JSON.stringify(theme),
+                ]
             );
             businessId = businessRes.rows[0].id;
         }
@@ -88,6 +176,15 @@ export async function completeOnboarding(formData: FormData) {
 
     } catch (error) {
         console.error("Onboarding error:", error);
-        throw new Error("Failed to create or update business");
+        if (error instanceof Error) {
+            return { 
+                success: false, 
+                error: error.message 
+            };
+        }
+        return { 
+            success: false, 
+            error: "Failed to create or update business" 
+        };
     }
 }

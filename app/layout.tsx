@@ -23,7 +23,7 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="en" suppressHydrationWarning>
-        <body className={`${inter.variable} antialiased`}>
+        <body className={`${inter.variable} antialiased`} suppressHydrationWarning>
           <ThemeProvider
             attribute="class"
             defaultTheme="system"

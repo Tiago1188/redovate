@@ -1,5 +1,6 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import { getUserOnboardingStatus } from "@/actions/user";
 
 const isPublicRoute = createRouteMatcher([
   "/sign-in(.*)",
@@ -8,31 +9,52 @@ const isPublicRoute = createRouteMatcher([
 ]);
 
 const isOnboardingRoute = createRouteMatcher(["/onboarding"]);
+const isGeneratingRoute = createRouteMatcher(["/generating"]);
 const isDashboardRoute = createRouteMatcher(["/dashboard(.*)"]);
 
 export default clerkMiddleware(async (auth, req) => {
   const { userId, sessionClaims } = await auth();
 
-  // If user is not signed in and trying to access a protected route, Clerk handles this by default 
-  // if we use auth.protect() or similar, but here we want custom logic.
-  // Actually, clerkMiddleware doesn't auto-protect unless we tell it to.
-
+  // If user is not signed in and trying to access a protected route, redirect to sign in
   if (!userId && !isPublicRoute(req)) {
     return (await auth()).redirectToSignIn({ returnBackUrl: req.url });
   }
 
   if (userId) {
-    const businessId = sessionClaims?.publicMetadata?.businessId;
+    // For dashboard route, check database to ensure we have the latest data
+    // This handles cases where Clerk session metadata hasn't refreshed yet
+    if (isDashboardRoute(req)) {
+      const onboardingStatus = await getUserOnboardingStatus(userId);
+      if (onboardingStatus.hasValidAccountType) {
+        // User has valid account type, allow access to dashboard
+        return;
+      } else {
+        // User doesn't have valid account type, redirect to onboarding
+        const onboardingUrl = new URL("/onboarding", req.url);
+        return NextResponse.redirect(onboardingUrl);
+      }
+    }
 
-    // If user has a business but is on onboarding page, redirect to dashboard
-    if (businessId && isOnboardingRoute(req)) {
+    // For other routes, use Clerk session metadata (faster)
+    const businessId = sessionClaims?.publicMetadata?.businessId as string | undefined;
+    const businessType = sessionClaims?.publicMetadata?.businessType as string | undefined;
+
+    // User has valid account type if they have a businessId and valid businessType
+    const hasValidAccountType = !!(
+      businessId && 
+      (businessType === 'sole_trader' || businessType === 'company')
+    );
+
+    // If user has a valid account type and is on onboarding page, redirect to dashboard
+    if (hasValidAccountType && isOnboardingRoute(req)) {
       const dashboardUrl = new URL("/dashboard", req.url);
       return NextResponse.redirect(dashboardUrl);
     }
 
-    // If user has NO business and is NOT on onboarding/dashboard page (and not public), redirect to onboarding
-    // We allow dashboard access even without businessId because the session needs time to refresh after onboarding
-    if (!businessId && !isOnboardingRoute(req) && !isDashboardRoute(req) && !isPublicRoute(req)) {
+    // If user does NOT have a valid account type, redirect to onboarding
+    // This includes: no businessId, no businessType, or invalid businessType
+    // Allow access to generating page (users who just completed onboarding)
+    if (!hasValidAccountType && !isOnboardingRoute(req) && !isGeneratingRoute(req) && !isPublicRoute(req)) {
       const onboardingUrl = new URL("/onboarding", req.url);
       return NextResponse.redirect(onboardingUrl);
     }
