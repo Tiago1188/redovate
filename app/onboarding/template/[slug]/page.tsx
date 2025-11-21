@@ -13,8 +13,7 @@ interface PageProps {
 export default async function TemplatePreviewPage({ params }: PageProps) {
     const { slug } = await params;
 
-    const template = await getTemplateBySlug(slug);
-    console.log(template);
+    const template = await getTemplateBySlug(slug);    
     if (!template) notFound();
 
     // FIX: Ensure JSON from DB is parsed
