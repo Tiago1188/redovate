@@ -116,6 +116,12 @@ export default function PlansPage() {
         const plan = plans.find((p) => p.name === selectedPlan);
         if (!plan || plan.comingSoon) return;
 
+        // Type guard: only allow 'free' or 'starter' plans
+        if (plan.planType !== 'free' && plan.planType !== 'starter') {
+            toast.error("This plan is not yet available.");
+            return;
+        }
+
         startTransition(async () => {
             try {
                 const result = await selectPlan(plan.planType);
