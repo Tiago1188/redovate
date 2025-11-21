@@ -41,7 +41,7 @@ export async function completeOnboarding(formData: FormData) {
     const validationResult = onboardingSchema.safeParse(rawData);
     
     if (!validationResult.success) {
-        const errors = validationResult.error.errors.map(err => ({
+        const errors = validationResult.error.issues.map(err => ({
             field: err.path.join('.'),
             message: err.message,
         }));
