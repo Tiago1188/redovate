@@ -1,14 +1,8 @@
 'use server';
 
 import { auth, clerkClient } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
-import { z } from "zod";
 import pool from "@/lib/db";
-
-const onboardingSchema = z.object({
-    businessName: z.string().min(2, "Business name must be at least 2 characters"),
-    accountType: z.enum(["sole_trader", "company"]),
-});
+import { onboardingSchema } from "@/validations/onboarding";
 
 export async function completeOnboarding(formData: FormData) {
     const { userId } = await auth();
@@ -18,24 +12,27 @@ export async function completeOnboarding(formData: FormData) {
     }
 
     const rawData = {
-        businessName: formData.get("business-name"),
         accountType: formData.get("account-type"),
     };
 
     const validatedData = onboardingSchema.parse(rawData);
 
-    // Generate a simple slug from the business name
-    const slug = validatedData.businessName
+    const client = await clerkClient();
+    const user = await client.users.getUser(userId);
+
+    // Generate a default business name since we removed the input
+    // e.g. "Tiago's Business" or just "My Business" if name is missing
+    const defaultBusinessName = user.firstName
+        ? `${user.firstName}'s Business`
+        : "My Business";
+
+    // Generate a simple slug
+    const slug = defaultBusinessName
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/(^-|-$)+/g, "") + "-" + Math.floor(Math.random() * 10000);
 
-    const client = await clerkClient();
-    const user = await client.users.getUser(userId);
-
     // Ensure user exists in our DB first
-    // We try to insert the user if they don't exist (idempotent-ish)
-    // In a real app, we might use webhooks to sync users, but for now we ensure it here.
     try {
         await pool.query(
             `INSERT INTO users (clerk_id, email, full_name) 
@@ -53,15 +50,31 @@ export async function completeOnboarding(formData: FormData) {
 
         if (!internalUserId) throw new Error("User not found");
 
-        // Create the business
-        const businessRes = await pool.query(
-            `INSERT INTO businesses (user_id, business_name, slug, business_type)
-       VALUES ($1, $2, $3, $4)
-       RETURNING id`,
-            [internalUserId, validatedData.businessName, slug, validatedData.accountType]
+        // Check if business already exists for this user
+        const existingBusinessRes = await pool.query(
+            `SELECT id FROM businesses WHERE user_id = $1 LIMIT 1`,
+            [internalUserId]
         );
 
-        const businessId = businessRes.rows[0].id;
+        let businessId: string;
+
+        if (existingBusinessRes.rows.length > 0) {
+            // Update existing business
+            businessId = existingBusinessRes.rows[0].id;
+            await pool.query(
+                `UPDATE businesses SET business_type = $1, updated_at = now() WHERE id = $2`,
+                [validatedData.accountType, businessId]
+            );
+        } else {
+            // Create new business
+            const businessRes = await pool.query(
+                `INSERT INTO businesses (user_id, business_name, slug, business_type)
+         VALUES ($1, $2, $3, $4)
+         RETURNING id`,
+                [internalUserId, defaultBusinessName, slug, validatedData.accountType]
+            );
+            businessId = businessRes.rows[0].id;
+        }
 
         // Update Clerk Metadata
         await client.users.updateUserMetadata(userId, {
@@ -71,10 +84,10 @@ export async function completeOnboarding(formData: FormData) {
             },
         });
 
+        return { success: true };
+
     } catch (error) {
         console.error("Onboarding error:", error);
-        throw new Error("Failed to create business");
+        throw new Error("Failed to create or update business");
     }
-
-    redirect("/dashboard");
 }

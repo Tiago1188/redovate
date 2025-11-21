@@ -1,5 +1,11 @@
-import { CheckCircle, User, Building2 } from "lucide-react";
+'use client';
+
+import { CheckCircle, User, Building2, Loader2 } from "lucide-react";
 import { completeOnboarding } from "@/actions/onboarding";
+import { useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 
 const accountTypes = [
     {
@@ -17,6 +23,24 @@ const accountTypes = [
 ];
 
 export default function OnboardingPage() {
+    const [isPending, startTransition] = useTransition();
+    const router = useRouter();
+
+    const handleSubmit = (formData: FormData) => {
+        startTransition(async () => {
+            try {
+                const result = await completeOnboarding(formData);
+                if (result.success) {
+                    toast.success("Account type saved successfully!");
+                    router.push("/dashboard");
+                }
+            } catch (error) {
+                toast.error("Failed to save account type. Please try again.");
+                console.error(error);
+            }
+        });
+    };
+
     return (
         <div className="flex min-h-screen items-center justify-center bg-zinc-50 px-4 py-12 dark:bg-zinc-950 sm:px-6 lg:px-8">
             <div className="w-full max-w-md space-y-8">
@@ -29,23 +53,7 @@ export default function OnboardingPage() {
                     </p>
                 </div>
 
-                <form action={completeOnboarding} className="space-y-8">
-                    <div>
-                        <label htmlFor="business-name" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                            Business Name
-                        </label>
-                        <div className="mt-1">
-                            <input
-                                type="text"
-                                name="business-name"
-                                id="business-name"
-                                required
-                                className="block w-full rounded-md border-zinc-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white sm:text-sm px-3 py-2 border"
-                                placeholder="Acme Construction"
-                            />
-                        </div>
-                    </div>
-
+                <form action={handleSubmit} className="space-y-8">
                     <fieldset>
                         <legend className="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-4">Account type</legend>
                         <div className="space-y-4">
@@ -93,9 +101,20 @@ export default function OnboardingPage() {
                         </div>
                     </fieldset>
                     <div className="flex justify-end">
-                        <button type="submit" className="w-full rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                            Complete Setup
-                        </button>
+                        <Button
+                            type="submit"
+                            disabled={isPending}
+                            className="w-full bg-indigo-600 hover:bg-indigo-500 text-white"
+                        >
+                            {isPending ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Setting up...
+                                </>
+                            ) : (
+                                "Complete Setup"
+                            )}
+                        </Button>
                     </div>
                 </form>
             </div>

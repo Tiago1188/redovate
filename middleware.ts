@@ -8,6 +8,7 @@ const isPublicRoute = createRouteMatcher([
 ]);
 
 const isOnboardingRoute = createRouteMatcher(["/onboarding"]);
+const isDashboardRoute = createRouteMatcher(["/dashboard(.*)"]);
 
 export default clerkMiddleware(async (auth, req) => {
   const { userId, sessionClaims } = await auth();
@@ -29,8 +30,9 @@ export default clerkMiddleware(async (auth, req) => {
       return NextResponse.redirect(dashboardUrl);
     }
 
-    // If user has NO business and is NOT on onboarding page (and not public), redirect to onboarding
-    if (!businessId && !isOnboardingRoute(req) && !isPublicRoute(req)) {
+    // If user has NO business and is NOT on onboarding/dashboard page (and not public), redirect to onboarding
+    // We allow dashboard access even without businessId because the session needs time to refresh after onboarding
+    if (!businessId && !isOnboardingRoute(req) && !isDashboardRoute(req) && !isPublicRoute(req)) {
       const onboardingUrl = new URL("/onboarding", req.url);
       return NextResponse.redirect(onboardingUrl);
     }
