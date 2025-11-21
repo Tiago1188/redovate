@@ -27,13 +27,13 @@ EXCEPTION
 END $$;
 
 DO $$ BEGIN
-    CREATE TYPE target_audience_enum AS ENUM('sole_trader', 'company', 'agency', 'any');
+    CREATE TYPE target_audience_enum AS ENUM('sole_trader', 'company');
 EXCEPTION
     WHEN duplicate_object THEN null;
 END $$;
 
 DO $$ BEGIN
-    CREATE TYPE business_type_enum AS ENUM('sole_trader', 'company', 'agency');
+    CREATE TYPE business_type_enum AS ENUM('sole_trader', 'company');
 EXCEPTION
     WHEN duplicate_object THEN null;
 END $$;
