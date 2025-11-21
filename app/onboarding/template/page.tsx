@@ -11,6 +11,31 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Eye } from "lucide-react";
 
+// Helper function to get fallback Unsplash images based on template name/slug
+function getFallbackThumbnail(templateName: string, slug: string): string {
+  const name = (templateName || slug || "").toLowerCase();
+  
+  // Map common template types to relevant Unsplash images
+  if (name.includes("law") || name.includes("legal")) {
+    return "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?q=80&auto=format&fit=crop&w=1200&h=675";
+  }
+  if (name.includes("dentist") || name.includes("dental")) {
+    return "https://images.unsplash.com/photo-1606811971618-4486d14f3f99?q=80&auto=format&fit=crop&w=1200&h=675";
+  }
+  if (name.includes("real estate") || name.includes("property")) {
+    return "https://images.unsplash.com/photo-1560518883-ce09059eeffa?q=80&auto=format&fit=crop&w=1200&h=675";
+  }
+  if (name.includes("restaurant") || name.includes("food")) {
+    return "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&auto=format&fit=crop&w=1200&h=675";
+  }
+  if (name.includes("fitness") || name.includes("gym")) {
+    return "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&auto=format&fit=crop&w=1200&h=675";
+  }
+  
+  // Default professional business image
+  return "https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&auto=format&fit=crop&w=1200&h=675";
+}
+
 export default async function TemplateSelectionPage() {
     const { userId } = await auth();
     if (!userId) redirect("/sign-in");
@@ -37,24 +62,25 @@ export default async function TemplateSelectionPage() {
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
 
-                        {templates.map((template: any) => (
+                        {templates.map((template: any) => {
+                            // Replace broken Cloudinary demo URLs with Unsplash fallbacks
+                            const thumbnailUrl = template.thumbnail && 
+                                !template.thumbnail.includes('cloudinary.com/demo') 
+                                ? template.thumbnail 
+                                : getFallbackThumbnail(template.name, template.slug);
+                            
+                            return (
                             <Card
                                 key={template.id}
                                 className="overflow-hidden flex flex-col h-full transition-all hover:shadow-lg hover:border-blue-500/50"
                             >
                                 <div className="relative aspect-video bg-zinc-100 dark:bg-zinc-800">
-                                    {template.thumbnail ? (
-                                        <Image
-                                            src={template.thumbnail}
-                                            alt={template.name}
-                                            fill
-                                            className="object-cover"
-                                        />
-                                    ) : (
-                                        <div className="flex items-center justify-center h-full text-zinc-400">
-                                            No Thumbnail
-                                        </div>
-                                    )}
+                                    <Image
+                                        src={thumbnailUrl}
+                                        alt={template.name}
+                                        fill
+                                        className="object-cover"
+                                    />
 
                                     <div className="absolute top-2 right-2">
                                         <Badge
@@ -86,7 +112,8 @@ export default async function TemplateSelectionPage() {
                                     <UseTemplateButton templateId={template.id} />
                                 </CardFooter>
                             </Card>
-                        ))}
+                            );
+                        })}
 
                     </div>
                 )}
