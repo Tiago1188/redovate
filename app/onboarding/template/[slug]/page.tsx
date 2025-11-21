@@ -14,7 +14,6 @@ export default async function TemplatePreviewPage({ params }: PageProps) {
     const { slug } = await params;
 
     const template = await getTemplateBySlug(slug);
-    console.log("TEMPLATE LOADED:", template);
 
     if (!template) notFound();
 
@@ -56,9 +55,8 @@ export default async function TemplatePreviewPage({ params }: PageProps) {
             {/* Template Preview */}
             <div className="flex-1">
                 <RenderTemplate
-                    html_template={template.html_template}   // ✅ REQUIRED
-                    components={components}                 // fallback system
-                    data={fakeContent}                      // placeholder props
+                    components={components}
+                    data={fakeContent}
                     showBranding={true}
                 />
             </div>

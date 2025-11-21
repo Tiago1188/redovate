@@ -1,7 +1,6 @@
 'use server';
 
 import { auth } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
 import pool from "@/lib/db";
 
 export async function saveSelectedTemplate(templateId: string) {
@@ -60,45 +59,101 @@ export async function saveSelectedTemplate(templateId: string) {
             );
         }
 
-        // 4. Note: We are NOT populating business_section_status here.
-        // The requirements say: "After the template is selected: Continue to AI generation... Mark all sections...".
-        // We assume the AI generation step or a subsequent process handles the section initialization based on the template.
-        // However, if the AI generation depends on knowing which sections are pending, we might need to initialize them here.
-        // Given the prompt "Mark all sections in business_section_status as pending/completed accordingly" is listed under "After the template is selected",
-        // and before "Redirect to /dashboard", it suggests it happens during the flow.
-        // I'll initialize them here to be safe, so the AI step knows what to generate.
-        
-        // Fetch template sections
-        const sectionsRes = await pool.query(
-            `SELECT id, name FROM template_sections WHERE template_id = $1`,
+        // 4. Initialize section status based on template components
+        // With the new component-based system, we use the components JSON array
+        // First, get the template to access its components
+        const templateRes = await pool.query(
+            `SELECT components FROM templates WHERE id = $1`,
             [templateId]
         );
-        
-        // Initialize status for each section
-        // We use ON CONFLICT to avoid duplicates if they switch back and forth
-        // But wait, business_section_status links to a section_id.
-        // If we switch templates, we get new section IDs.
-        // So we should probably clean up old status or just add new ones.
-        // Since we are switching templates, the old sections might not apply.
-        // But we keep history? "business_section_status" links to "template_sections".
-        // "template_sections" are specific to a template (foreign key template_id).
-        // So yes, we should add entries for the new template's sections.
-        
-        for (const section of sectionsRes.rows) {
+
+        if (templateRes.rows.length === 0) {
+            throw new Error("Template not found");
+        }
+
+        const template = templateRes.rows[0];
+        const components = Array.isArray(template.components) 
+            ? template.components 
+            : (typeof template.components === 'string' ? JSON.parse(template.components || "[]") : []);
+
+        // If no components, that's okay - just skip section initialization
+        if (!components || components.length === 0) {
+            console.log("Template has no components, skipping section initialization");
+            return { success: true };
+        }
+
+        // Clean up old section statuses for this business (from previous template)
+        // Get all section IDs for the old template
+        const oldBusinessTemplateRes = await pool.query(
+            `SELECT template_id FROM business_templates 
+             WHERE business_id = $1 AND is_active = false
+             ORDER BY updated_at DESC LIMIT 1`,
+            [businessId]
+        );
+
+        if (oldBusinessTemplateRes.rows.length > 0) {
+            const oldTemplateId = oldBusinessTemplateRes.rows[0].template_id;
+            await pool.query(
+                `DELETE FROM business_section_status 
+                 WHERE business_id = $1 
+                 AND section_id IN (
+                     SELECT id FROM template_sections WHERE template_id = $2
+                 )`,
+                [businessId, oldTemplateId]
+            );
+        }
+
+        // For each component type, ensure we have a template_section entry
+        // and then create business_section_status
+        for (let i = 0; i < components.length; i++) {
+            const component = components[i];
+            if (!component || !component.type) continue;
+
+            // Get or create template_section entry
+            let sectionRes = await pool.query(
+                `SELECT id FROM template_sections 
+                 WHERE template_id = $1 AND name = $2 
+                 LIMIT 1`,
+                [templateId, component.type]
+            );
+
+            let sectionId: string;
+            if (sectionRes.rows.length === 0) {
+                // Create the section entry
+                const insertRes = await pool.query(
+                    `INSERT INTO template_sections (template_id, name, label, sort_order)
+                     VALUES ($1, $2, $3, $4)
+                     RETURNING id`,
+                    [templateId, component.type, component.type, i]
+                );
+                sectionId = insertRes.rows[0].id;
+            } else {
+                sectionId = sectionRes.rows[0].id;
+            }
+
+            // Delete any existing status for this business+section (in case of re-selection)
+            await pool.query(
+                `DELETE FROM business_section_status 
+                 WHERE business_id = $1 AND section_id = $2`,
+                [businessId, sectionId]
+            );
+
+            // Insert new status
             await pool.query(
                 `INSERT INTO business_section_status (business_id, section_id, status)
-                 VALUES ($1, $2, 'pending')
-                 ON CONFLICT DO NOTHING`, // If already exists for this business+section (unlikely unless re-selecting), leave it
-                 [businessId, section.id]
+                 VALUES ($1, $2, 'pending')`,
+                [businessId, sectionId]
             );
         }
 
     } catch (error) {
         console.error("Error saving selected template:", error);
-        throw new Error("Failed to save template selection");
+        const errorMessage = error instanceof Error ? error.message : "Unknown error";
+        throw new Error(`Failed to save template selection: ${errorMessage}`);
     }
 
-    // Redirect to the next step
-    redirect("/generating");
+    // Note: Redirect is handled in the client component since server action redirects
+    // may not work properly with useTransition
+    return { success: true };
 }
 
