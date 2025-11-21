@@ -291,7 +291,7 @@ export function OnboardingForm({ initialPlanType = null }: OnboardingFormProps) 
                 const result = await completeOnboarding(formDataToSubmit);
                 if (result.success) {
                     toast.success("Onboarding completed successfully!");
-                    router.push("/generating");
+                    router.push("/onboarding/template");
                 } else {
                     // Handle validation errors
                     if (result.errors && result.errors.length > 0) {
@@ -882,12 +882,12 @@ export function OnboardingForm({ initialPlanType = null }: OnboardingFormProps) 
                                 {isPending ? (
                                     <>
                                         <Loader2 className="h-4 w-4 animate-spin" />
-                                        Generating...
+                                        Saving...
                                     </>
                                 ) : (
                                     <>
                                         <Sparkles className="h-4 w-4" />
-                                        Generate My Website
+                                        Choose Template
                                     </>
                                 )}
                             </Button>

@@ -148,8 +148,18 @@ CREATE TABLE IF NOT EXISTS businesses(
         components JSONB DEFAULT '[]',
         status template_status_enum DEFAULT 'active',
         created_at TIMESTAMP DEFAULT now(),
-        updated_at TIMESTAMP DEFAULT now()
+        updated_at TIMESTAMP DEFAULT now(),
+        fake_content JSONB DEFAULT '{}'::jsonb
     );
+
+DO $$
+BEGIN
+    BEGIN
+        ALTER TABLE templates ADD COLUMN fake_content JSONB DEFAULT '{}'::jsonb;
+    EXCEPTION
+        WHEN duplicate_column THEN NULL;
+    END;
+END $$;
 
 -- ===================================
     --TABLE: business_templates
