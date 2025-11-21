@@ -33,10 +33,10 @@ export const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
     },
     starter: {
         maxServices: 15,
-        maxServiceAreas: 100, // Unlimited for practical purposes
+        maxServiceAreas: 5, // Unlimited for practical purposes
         maxKeywords: 15,
-        maxImages: 999, // Unlimited for practical purposes
-        maxLocations: 100, // Unlimited for practical purposes
+        maxImages: 15,// Unlimited for practical purposes
+        maxLocations:1,// Unlimited for practical purposes
         customDomain: true,
         removeBranding: true,
         customThemes: true,

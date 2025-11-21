@@ -151,51 +151,9 @@ export default function PlansPage() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
                     {plans.map((plan) => (
                         <div key={plan.name} className="relative flex flex-col">
-                            {/* Recommended + Free Badge (combined for Starter plan) - Outside card */}
-                            {plan.highlighted && !plan.comingSoon && plan.planType === "starter" && isStarterFreeAvailable && (
-                                <div className="absolute -top-6 left-1/2 -translate-x-1/2 flex items-center z-10">
-                                    <div className="flex items-center bg-blue-600 text-white px-4 py-1.5 gap-1.5 shadow-lg dark:bg-blue-500 rounded-l-lg">
-                                        <Sparkles className="w-3.5 h-3.5" />
-                                        <span className="text-sm font-medium">Recommended</span>
-                                    </div>
-                                    <div className="bg-zinc-700 text-white px-3 py-1.5 text-xs shadow-lg rounded-r-lg dark:bg-zinc-800 whitespace-nowrap">
-                                        Free for first 500 users
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Recommended Badge (for Starter plan when free offer is not available) - Outside card */}
-                            {plan.highlighted && !plan.comingSoon && plan.planType === "starter" && !isStarterFreeAvailable && (
-                                <div className="absolute -top-6 left-1/2 -translate-x-1/2 z-10">
-                                    <Badge className="bg-blue-600 text-white px-4 py-1.5 gap-1.5 shadow-lg dark:bg-blue-500">
-                                        <Sparkles className="w-3.5 h-3.5" />
-                                        Recommended
-                                    </Badge>
-                                </div>
-                            )}
-
-                            {/* Recommended Badge (for non-Starter plans) - Outside card */}
-                            {plan.highlighted && !plan.comingSoon && plan.planType !== "starter" && (
-                                <div className="absolute -top-6 left-1/2 -translate-x-1/2 z-10">
-                                    <Badge className="bg-blue-600 text-white px-4 py-1.5 gap-1.5 shadow-lg dark:bg-blue-500">
-                                        <Sparkles className="w-3.5 h-3.5" />
-                                        Recommended
-                                    </Badge>
-                                </div>
-                            )}
-
-                            {/* Coming Soon Badge - Outside card */}
-                            {plan.comingSoon && (
-                                <div className="absolute -top-6 left-1/2 -translate-x-1/2 z-10">
-                                    <Badge variant="secondary" className="px-4 py-1.5 shadow-lg">
-                                        Coming Soon
-                                    </Badge>
-                                </div>
-                            )}
-
                             <Card
                                 onClick={() => handlePlanSelect(plan.name, plan.comingSoon)}
-                                className={`relative flex flex-col transition-all duration-300 cursor-pointer mt-8 ${
+                                className={`relative flex flex-col transition-all duration-300 cursor-pointer ${
                                     selectedPlan === plan.name
                                         ? "border-blue-600 border-2 shadow-lg shadow-blue-600/20 ring-2 ring-blue-600/20 dark:border-blue-500 dark:ring-blue-500/20"
                                         : plan.highlighted
@@ -213,6 +171,45 @@ export default function PlansPage() {
                                 )}
 
                             <CardHeader className="text-center pb-8 pt-8">
+                                {/* Badges inside card header */}
+                                <div className="flex flex-col items-center gap-3 mb-4">
+                                    {/* Recommended + Free Badge (combined for Starter plan) */}
+                                    {plan.highlighted && !plan.comingSoon && plan.planType === "starter" && isStarterFreeAvailable && (
+                                        <div className="flex items-center">
+                                            <div className="flex items-center bg-blue-600 text-white px-4 py-1.5 gap-1.5 shadow-lg dark:bg-blue-500 rounded-l-lg">
+                                                <Sparkles className="w-3.5 h-3.5" />
+                                                <span className="text-sm font-medium">Recommended</span>
+                                            </div>
+                                            <div className="bg-zinc-700 text-white px-3 py-1.5 text-xs shadow-lg rounded-r-lg dark:bg-zinc-800 whitespace-nowrap">
+                                                Free for first 500 users
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Recommended Badge (for Starter plan when free offer is not available) */}
+                                    {plan.highlighted && !plan.comingSoon && plan.planType === "starter" && !isStarterFreeAvailable && (
+                                        <Badge className="bg-blue-600 text-white px-4 py-1.5 gap-1.5 shadow-lg dark:bg-blue-500">
+                                            <Sparkles className="w-3.5 h-3.5" />
+                                            Recommended
+                                        </Badge>
+                                    )}
+
+                                    {/* Recommended Badge (for non-Starter plans) */}
+                                    {plan.highlighted && !plan.comingSoon && plan.planType !== "starter" && (
+                                        <Badge className="bg-blue-600 text-white px-4 py-1.5 gap-1.5 shadow-lg dark:bg-blue-500">
+                                            <Sparkles className="w-3.5 h-3.5" />
+                                            Recommended
+                                        </Badge>
+                                    )}
+
+                                    {/* Coming Soon Badge */}
+                                    {plan.comingSoon && (
+                                        <Badge variant="secondary" className="px-4 py-1.5 shadow-lg">
+                                            Coming Soon
+                                        </Badge>
+                                    )}
+                                </div>
+
                                 <CardTitle className="text-2xl mb-2">{plan.name}</CardTitle>
                                 <CardDescription className="text-sm">{plan.description}</CardDescription>
                                 <div className="mt-4">
