@@ -1,18 +1,8 @@
 import type { Metadata } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
-import { Inter, Outfit } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
+import * as Fonts from "@/lib/fonts";
 import "./globals.css";
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-});
-
-const outfit = Outfit({
-  subsets: ["latin"],
-  variable: "--font-outfit",
-});
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -24,10 +14,14 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const fontVariables = Object.values(Fonts)
+    .map((font) => font.variable)
+    .join(" ");
+
   return (
     <ClerkProvider>
       <html lang="en" suppressHydrationWarning>
-        <body className={`${inter.variable} ${outfit.variable} antialiased`} suppressHydrationWarning>
+        <body className={`${fontVariables} antialiased`} suppressHydrationWarning>
           {children}
           <Toaster />
         </body>

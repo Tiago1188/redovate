@@ -477,7 +477,7 @@
 
 @layer utilities {
   .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-amber-500;
+    @apply bg-clip-text text-transparent bg-linear-to-r from-primary to-amber-500;
   }
   
   .hover-lift {
@@ -497,5 +497,65 @@
       transform: scale(1);
       opacity: 1;
     }
+  }
+
+  .font-inter {
+    --font-sans: var(--font-inter);
+    font-family: var(--font-sans), sans-serif;
+  }
+
+  .font-poppins {
+    --font-sans: var(--font-poppins);
+    font-family: var(--font-sans), sans-serif;
+  }
+
+  .font-montserrat {
+    --font-sans: var(--font-montserrat);
+    font-family: var(--font-sans), sans-serif;
+  }
+
+  .font-lato {
+    --font-sans: var(--font-lato);
+    font-family: var(--font-sans), sans-serif;
+  }
+
+  .font-nunito {
+    --font-sans: var(--font-nunito);
+    font-family: var(--font-sans), sans-serif;
+  }
+
+  .font-worksans {
+    --font-sans: var(--font-worksans);
+    font-family: var(--font-sans), sans-serif;
+  }
+
+  .font-sourcesans {
+    --font-sans: var(--font-sourcesans);
+    font-family: var(--font-sans), sans-serif;
+  }
+
+  .font-playfair {
+    --font-sans: var(--font-playfair);
+    font-family: var(--font-sans), serif;
+  }
+
+  .font-baskerville {
+    --font-sans: var(--font-baskerville);
+    font-family: var(--font-sans), serif;
+  }
+
+  .font-plusjakarta {
+    --font-sans: var(--font-plusjakarta);
+    font-family: var(--font-sans), sans-serif;
+  }
+
+  .font-dmserif {
+    --font-sans: var(--font-dmserif);
+    font-family: var(--font-sans), serif;
+  }
+
+  .font-outfit {
+    --font-sans: var(--font-outfit);
+    font-family: var(--font-sans), sans-serif;
   }
 }

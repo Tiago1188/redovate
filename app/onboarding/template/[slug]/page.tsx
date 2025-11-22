@@ -1,10 +1,7 @@
 import { notFound } from "next/navigation";
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 import { getTemplateBySlug } from "@/actions/templates";
-import RenderTemplate from "@/components/template-renderer/RenderTemplate";
-import { UseTemplateButton } from "../use-template-button";
-import { Button } from "@/components/ui/button";
+import { getUserPlanType } from "@/actions/user";
+import ClientTemplatePreview from "./ClientTemplatePreview";
 
 interface PageProps {
     params: Promise<{ slug: string }>;
@@ -15,6 +12,8 @@ export default async function TemplatePreviewPage({ params }: PageProps) {
 
     const template = await getTemplateBySlug(slug);
     if (!template) notFound();
+
+    const userPlan = (await getUserPlanType()) || 'free';
 
     // Parse components array (fallback for old templates)
     const components = Array.isArray(template.components)
@@ -27,45 +26,11 @@ export default async function TemplatePreviewPage({ params }: PageProps) {
         : JSON.parse(template.fake_content || "{}");
 
     return (
-        <div className="min-h-screen bg-white dark:bg-zinc-950 flex flex-col">
-            
-            {/* Top Bar */}
-            <div className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
-                <div className="container flex h-14 items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        <Button asChild variant="ghost" size="sm">
-                            <Link href="/onboarding/template">
-                                <ArrowLeft className="mr-2 h-4 w-4" />
-                                Back to templates
-                            </Link>
-                        </Button>
-
-                        <div className="h-6 w-px bg-border" />
-
-                        <span className="font-medium text-sm hidden sm:inline-block">
-                            Previewing: {template.name}
-                        </span>
-                    </div>
-
-                    <UseTemplateButton templateId={template.id} />
-                </div>
-            </div>
-
-            {/* Template Preview */}
-            <div 
-                className="flex-1"
-                style={{
-                    // @ts-ignore
-                    "--header-offset": "3.5rem",
-                } as React.CSSProperties}
-            >
-                <RenderTemplate
-                    components={components}
-                    data={fakeContent}
-                    showBranding={true}
-                    templateSlug={template.slug}
-                />
-            </div>
-        </div>
+        <ClientTemplatePreview
+            template={template}
+            components={components}
+            fakeContent={fakeContent}
+            userPlan={userPlan}
+        />
     );
 }

@@ -7,14 +7,20 @@ import { Check, Loader2 } from "lucide-react";
 import { saveSelectedTemplate } from "@/actions/templates";
 import { toast } from "sonner";
 
-export function UseTemplateButton({ templateId }: { templateId: string }) {
+export function UseTemplateButton({ 
+    templateId, 
+    customizations 
+}: { 
+    templateId: string;
+    customizations?: { theme?: string; font?: string };
+}) {
     const [isPending, startTransition] = useTransition();
     const router = useRouter();
 
     const handleSelect = () => {
         startTransition(async () => {
             try {
-                await saveSelectedTemplate(templateId);
+                await saveSelectedTemplate(templateId, customizations);
                 // Redirect manually since server action redirect may not work with useTransition
                 router.push("/generating");
             } catch (error) {
