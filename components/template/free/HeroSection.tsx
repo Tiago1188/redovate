@@ -1,42 +1,65 @@
-export function HeroSection({ data }: { data?: any }) {
-  const heroImage = data?.hero_image || "https://images.unsplash.com/photo-1560518883-ce09059eeffa?q=80&auto=format&fit=crop&w=1920&h=1080";
+// Helper to inject theme CSS variables
+const ThemeStyles = ({ theme }: { theme: any }) => {
+  if (!theme) return null;
+  return (
+    <style jsx global>{`
+      :root {
+        --primary: ${theme.primary};
+        --background: ${theme.background};
+      }
+    `}</style>
+  );
+};
 
+export function HeroSection({ data, theme }: { data?: any; theme?: any }) {
+  const heroImage = data?.hero_image || "https://images.unsplash.com/photo-1598514982842-ffe228d3ccf8?q=80&auto=format&fit=crop&w=1600";
+  const primaryColor = theme?.primary || "#0ea5e9";
+  console.log(heroImage);
   return (
     <section className="relative min-h-[600px] flex items-center justify-center overflow-hidden">
+      <ThemeStyles theme={theme} />
       {/* Background Image with Overlay */}
       <div className="absolute inset-0 z-0">
         <img
           src={heroImage}
           alt="Hero background"
           className="w-full h-full object-cover"
+          style={{ objectPosition: 'center' }}
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/60" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/70" />
       </div>
 
       {/* Content */}
-      <div className="relative z-10 max-w-4xl mx-auto px-6 text-center space-y-8">
-        <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-white drop-shadow-lg">
-          {data?.business_name || "Your Business Name"}
+      <div className="relative z-10 max-w-5xl mx-auto px-6 text-center space-y-6 md:space-y-8 py-12 md:py-20">
+        <span 
+            className="inline-block px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white text-xs md:text-sm font-medium tracking-wide uppercase"
+        >
+            {data?.highlight || "Professional Services"}
+        </span>
+        
+        <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight text-white drop-shadow-xl leading-tight">
+          {data?.headline || data?.business_name || "SparkleClean"}
         </h1>
 
         {data?.tagline && (
-          <p className="text-xl md:text-2xl text-white/90 drop-shadow-md max-w-2xl mx-auto">
+          <p className="text-lg sm:text-xl md:text-2xl text-zinc-200 drop-shadow-md max-w-3xl mx-auto font-light leading-relaxed px-4">
             {data.tagline}
           </p>
         )}
 
-        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
+        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-8 w-full px-4">
           <a
             href="#contact"
-            className="inline-block bg-blue-600 hover:bg-blue-700 text-white px-10 py-4 rounded-xl font-semibold text-lg shadow-2xl hover:shadow-blue-500/50 transition-all duration-300 transform hover:scale-105"
+            className="w-full sm:w-auto inline-flex items-center justify-center px-8 py-4 text-base md:text-lg font-bold text-white transition-all duration-200 rounded-full shadow-lg hover:shadow-xl hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-black"
+            style={{ backgroundColor: primaryColor }}
           >
-            Get Started
+            {data?.cta_primary || "Book Now"}
           </a>
           <a
-            href="#about"
-            className="inline-block bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white px-10 py-4 rounded-xl font-semibold text-lg border-2 border-white/30 transition-all duration-300"
+            href="#services"
+            className="w-full sm:w-auto inline-flex items-center justify-center px-8 py-4 text-base md:text-lg font-bold text-white transition-all duration-200 bg-white/10 border border-white/20 rounded-full backdrop-blur-sm hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black"
           >
-            Learn More
+            View Services
           </a>
         </div>
       </div>
@@ -44,7 +67,7 @@ export function HeroSection({ data }: { data?: any }) {
       {/* Scroll Indicator */}
       <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-10 animate-bounce">
         <svg
-          className="w-6 h-6 text-white"
+          className="w-6 h-6 text-white/70"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"

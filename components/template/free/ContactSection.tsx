@@ -1,87 +1,124 @@
-export function ContactSection({ data }: { data?: any }) {
-  return (
-    <section className="py-20 px-6 bg-gradient-to-br from-gray-50 to-white">
-      <div className="max-w-4xl mx-auto">
-        <div className="text-center space-y-12">
-          <div className="space-y-4">
-            <h2 className="text-4xl font-bold text-gray-900">Get In Touch</h2>
-            <p className="text-lg text-gray-600">
-              We'd love to hear from you. Reach out and let's start a conversation.
-            </p>
-          </div>
+import React from "react";
+import { Mail, Phone, MapPin, Send } from "lucide-react";
 
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-12 space-y-8">
-            <div className="grid md:grid-cols-2 gap-8">
+export function ContactSection({ data, theme }: { data?: any; theme?: any }) {
+  const primaryColor = theme?.primary || "#0ea5e9";
+
+  return (
+    <section id="contact" className="py-24 px-6 bg-zinc-900 text-white relative overflow-hidden">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-10" 
+             style={{ backgroundImage: `radial-gradient(${primaryColor} 1px, transparent 1px)`, backgroundSize: '30px 30px' }}>
+        </div>
+
+      <div className="max-w-6xl mx-auto relative z-10">
+        <div className="grid lg:grid-cols-2 gap-16 lg:gap-24">
+            {/* Contact Info */}
+          <div className="space-y-10">
+            <div className="space-y-4">
+              <span className="text-xs md:text-sm font-bold uppercase tracking-wider text-zinc-400">
+                Contact Us
+              </span>
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white">
+                Let's Make Your Space Shine
+              </h2>
+              <p className="text-base md:text-lg text-zinc-400 leading-relaxed">
+                Ready to experience the difference? Get in touch with us today for a free quote or to schedule your first clean.
+              </p>
+            </div>
+
+            <div className="space-y-4 md:space-y-6">
               {/* Email */}
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
-                  <svg
-                    className="w-6 h-6 text-blue-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                    />
-                  </svg>
+              <a 
+                href={`mailto:${data?.email || "hello@sparkleclean.com"}`}
+                className="flex items-center gap-4 md:gap-6 p-4 md:p-6 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all group"
+              >
+                <div 
+                    className="w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center flex-shrink-0 bg-white/10 text-white group-hover:scale-110 transition-transform"
+                    style={{ color: primaryColor }}
+                >
+                  <Mail className="w-5 h-5 md:w-6 md:h-6" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-500 mb-1">Email</p>
-                  <a
-                    href={`mailto:${data?.email || "info@example.com"}`}
-                    className="text-lg font-semibold text-gray-900 hover:text-blue-600 transition-colors"
-                  >
-                    {data?.email || "info@example.com"}
-                  </a>
+                  <p className="text-xs md:text-sm font-medium text-zinc-400 mb-1">Email Us</p>
+                  <p className="text-lg md:text-xl font-semibold text-white group-hover:text-blue-400 transition-colors break-all">
+                    {data?.email || "hello@sparkleclean.com"}
+                  </p>
                 </div>
-              </div>
+              </a>
 
               {/* Phone */}
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center flex-shrink-0">
-                  <svg
-                    className="w-6 h-6 text-green-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
-                    />
-                  </svg>
+              <a 
+                href={`tel:${data?.phone || "0400 123 456"}`}
+                className="flex items-center gap-4 md:gap-6 p-4 md:p-6 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all group"
+              >
+                <div 
+                    className="w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center flex-shrink-0 bg-white/10 text-white group-hover:scale-110 transition-transform"
+                    style={{ color: primaryColor }}
+                >
+                  <Phone className="w-5 h-5 md:w-6 md:h-6" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-500 mb-1">Phone</p>
-                  <a
-                    href={`tel:${data?.phone || "+61 400 000 000"}`}
-                    className="text-lg font-semibold text-gray-900 hover:text-green-600 transition-colors"
-                  >
-                    {data?.phone || "+61 400 000 000"}
-                  </a>
+                  <p className="text-xs md:text-sm font-medium text-zinc-400 mb-1">Call Us</p>
+                  <p className="text-lg md:text-xl font-semibold text-white group-hover:text-blue-400 transition-colors">
+                    {data?.phone || "0400 123 456"}
+                  </p>
                 </div>
-              </div>
-            </div>
-
-            {/* CTA Button */}
-            <div className="pt-8 border-t border-gray-100">
-              <a
-                href={`mailto:${data?.email || "info@example.com"}`}
-                className="inline-block bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
-              >
-                Send Us a Message
               </a>
+              
+              {/* Location (Optional) */}
+               {data?.address && (
+                <div className="flex items-center gap-4 md:gap-6 p-4 md:p-6 rounded-2xl bg-white/5 border border-white/10">
+                    <div 
+                        className="w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center flex-shrink-0 bg-white/10 text-white"
+                        style={{ color: primaryColor }}
+                    >
+                    <MapPin className="w-5 h-5 md:w-6 md:h-6" />
+                    </div>
+                    <div>
+                    <p className="text-xs md:text-sm font-medium text-zinc-400 mb-1">Location</p>
+                    <p className="text-lg md:text-xl font-semibold text-white">
+                        {data.address}
+                    </p>
+                    </div>
+                </div>
+               )}
             </div>
+          </div>
+
+          {/* Simple Form Placeholder */}
+          <div className="bg-white rounded-3xl p-6 md:p-10 shadow-2xl text-zinc-900">
+             <h3 className="text-xl md:text-2xl font-bold mb-4 md:mb-6">Send us a Message</h3>
+             <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-zinc-700">First Name</label>
+                        <input type="text" className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all bg-zinc-50" placeholder="John" />
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-zinc-700">Last Name</label>
+                        <input type="text" className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all bg-zinc-50" placeholder="Doe" />
+                    </div>
+                </div>
+                <div className="space-y-2">
+                    <label className="text-sm font-medium text-zinc-700">Email Address</label>
+                    <input type="email" className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all bg-zinc-50" placeholder="john@example.com" />
+                </div>
+                <div className="space-y-2">
+                    <label className="text-sm font-medium text-zinc-700">Message</label>
+                    <textarea rows={4} className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all bg-zinc-50" placeholder="How can we help you?" />
+                </div>
+                <button 
+                    className="w-full py-4 rounded-xl text-white font-bold text-lg shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 flex items-center justify-center gap-2"
+                    style={{ backgroundColor: primaryColor }}
+                >
+                    <Send className="w-5 h-5" />
+                    Send Message
+                </button>
+             </form>
           </div>
         </div>
       </div>
     </section>
   );
 }
-
