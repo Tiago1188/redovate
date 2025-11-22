@@ -14,7 +14,6 @@ export default async function TemplatePreviewPage({ params }: PageProps) {
     const { slug } = await params;
 
     const template = await getTemplateBySlug(slug);
-
     if (!template) notFound();
 
     // Parse components array (fallback for old templates)
@@ -53,11 +52,18 @@ export default async function TemplatePreviewPage({ params }: PageProps) {
             </div>
 
             {/* Template Preview */}
-            <div className="flex-1">
+            <div 
+                className="flex-1"
+                style={{
+                    // @ts-ignore
+                    "--header-offset": "3.5rem",
+                } as React.CSSProperties}
+            >
                 <RenderTemplate
                     components={components}
                     data={fakeContent}
                     showBranding={true}
+                    templateSlug={template.slug}
                 />
             </div>
         </div>

@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 export function TestimonialsSection({ data }: { data?: any }) {
   const testimonials = data?.testimonials || [
     {
@@ -56,10 +58,14 @@ export function TestimonialsSection({ data }: { data?: any }) {
               {/* Author */}
               <div className="flex items-center gap-4 pt-6 border-t border-gray-100">
                 <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
-                  <img
-                    src={t.image || `https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&auto=format&fit=crop&w=150&h=150&ixlib=rb-4.0.3&ixid=${idx}`}
+                  <Image
+                    width={48}
+                    height={48}
+                    fill
+                    src={t.image || `headImages/electrician.png`}
                     alt={t.name}
-                    className="w-full h-full object-cover"
+                    className="object-cover"
+                    priority
                   />
                 </div>
                 <div>

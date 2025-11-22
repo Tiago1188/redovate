@@ -887,7 +887,7 @@ export function OnboardingForm({ initialPlanType = null }: OnboardingFormProps) 
                                 ) : (
                                     <>
                                         <Sparkles className="h-4 w-4" />
-                                        Choose Template
+                                        Select a Template
                                     </>
                                 )}
                             </Button>
