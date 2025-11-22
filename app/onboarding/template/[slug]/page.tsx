@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { getTemplateBySlug } from "@/app/onboarding/actions/getTemplateBySlug";
+import { getTemplateBySlug } from "@/actions/templates";
 import RenderTemplate from "@/components/template-renderer/RenderTemplate";
 import { UseTemplateButton } from "../use-template-button";
 import { Button } from "@/components/ui/button";

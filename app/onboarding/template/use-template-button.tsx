@@ -4,7 +4,7 @@ import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Check, Loader2 } from "lucide-react";
-import { saveSelectedTemplate } from "@/app/onboarding/actions/saveSelectedTemplate";
+import { saveSelectedTemplate } from "@/actions/templates";
 import { toast } from "sonner";
 
 export function UseTemplateButton({ templateId }: { templateId: string }) {

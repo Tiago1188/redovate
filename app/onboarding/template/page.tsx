@@ -3,7 +3,7 @@ import Image from "next/image";
 import { redirect } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
 
-import { getTemplatesByPlan } from "@/app/onboarding/actions/getTemplatesByPlan";
+import { getTemplatesByPlan } from "@/actions/templates";
 import { UseTemplateButton } from "./use-template-button";
 
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
