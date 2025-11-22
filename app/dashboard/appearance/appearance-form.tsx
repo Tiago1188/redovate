@@ -21,7 +21,7 @@ export function AppearanceForm({ initialTheme, businessId, userPlan }: Appearanc
   const [isPending, startTransition] = useTransition();
   
   const [font, setFont] = useState(initialTheme?.font || 'inter');
-  const [themeId, setThemeId] = useState(initialTheme?.['themeId'] || 'default'); // fallback to handling stored themeId
+  const [themeId, setThemeId] = useState(initialTheme?.themeId || 'default'); // fallback to handling stored themeId
   
   // Colors state
   // We try to load from initialTheme if it has explicit colors, otherwise fall back to preset colors
@@ -44,7 +44,7 @@ export function AppearanceForm({ initialTheme, businessId, userPlan }: Appearanc
               foreground: colors.foreground || '#0f172a'
           },
           themeId // Store the selected preset ID as well
-        } as any; // Cast to any to include themeId which might not be in interface strictly yet
+        };
 
         await updateBusinessTheme(businessId, themeData);
         toast.success("Appearance settings saved successfully");

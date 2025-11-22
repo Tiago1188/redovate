@@ -14,6 +14,7 @@ export interface ThemeColors {
 export interface ThemeData {
   font: string;
   colors: ThemeColors;
+  themeId?: string;
 }
 
 export async function updateBusinessTheme(businessId: string, themeData: ThemeData) {

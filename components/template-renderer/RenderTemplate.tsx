@@ -102,7 +102,7 @@ export default function RenderTemplate({
   const finalClass = `${themeClass} ${fontClass}`.trim();
 
   // Style object for custom colors
-  const style: React.CSSProperties = {};
+  const style: Record<string, string> = {};
   if (customColors) {
     if (customColors.primary) style['--primary'] = customColors.primary;
     if (customColors.secondary) style['--secondary'] = customColors.secondary;
