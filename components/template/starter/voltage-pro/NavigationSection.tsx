@@ -78,7 +78,7 @@ export function NavigationSection({ data }: { data?: NavigationSectionData }) {
         </div>
 
         {isMobileMenuOpen && (
-          <div className="md:hidden py-4 border-t border-border">
+          <div className="md:hidden py-4 border-t border-border bg-background/95 backdrop-blur-md absolute left-0 right-0 top-20 px-4 shadow-lg">
             {links.map((link) => (
               <button
                 key={link.id}

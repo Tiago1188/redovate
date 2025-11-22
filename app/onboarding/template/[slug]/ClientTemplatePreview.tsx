@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Monitor, Tablet, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import RenderTemplate from "@/components/template-renderer/RenderTemplate";
 import { UseTemplateButton } from "../use-template-button";
 import { TemplateCustomizer } from "@/components/template/TemplateCustomizer";
 import { THEME_PRESETS } from "@/data/theme-presets";
+import { cn } from "@/lib/utils";
 
 interface ClientTemplatePreviewProps {
   template: any;
@@ -15,6 +15,8 @@ interface ClientTemplatePreviewProps {
   fakeContent: any;
   userPlan: 'free' | 'starter' | 'business';
 }
+
+type DeviceType = 'desktop' | 'tablet' | 'mobile';
 
 export default function ClientTemplatePreview({
   template,
@@ -31,15 +33,15 @@ export default function ClientTemplatePreview({
     background: string;
   } | undefined>(undefined);
 
+  const [device, setDevice] = useState<DeviceType>('desktop');
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+
   const isAllowed = userPlan !== 'free';
 
   const handleThemeChange = (themeId: string) => {
     if (!isAllowed) return;
     setCustomTheme(themeId);
     
-    // If user picks a preset, we reset custom colors to match that preset (or clear them)
-    // Or we could load the preset colors into state.
-    // Let's load the preset colors into state if available.
     const preset = THEME_PRESETS.find(p => p.id === themeId);
     if (preset) {
         setCustomColors({
@@ -63,12 +65,40 @@ export default function ClientTemplatePreview({
       });
   };
 
+  // Post messages to iframe when state changes
+  useEffect(() => {
+    if (iframeRef.current?.contentWindow) {
+      iframeRef.current.contentWindow.postMessage({
+        type: 'UPDATE_THEME',
+        payload: customTheme
+      }, '*');
+    }
+  }, [customTheme]);
+
+  useEffect(() => {
+    if (iframeRef.current?.contentWindow) {
+      iframeRef.current.contentWindow.postMessage({
+        type: 'UPDATE_FONT',
+        payload: customFont
+      }, '*');
+    }
+  }, [customFont]);
+
+  useEffect(() => {
+    if (iframeRef.current?.contentWindow) {
+      iframeRef.current.contentWindow.postMessage({
+        type: 'UPDATE_COLORS',
+        payload: customColors
+      }, '*');
+    }
+  }, [customColors]);
+
   return (
-    <div className="min-h-screen bg-white dark:bg-zinc-950 flex flex-col relative">
+    <div className="min-h-screen bg-zinc-100 dark:bg-zinc-950 flex flex-col relative overflow-hidden">
       
       {/* Top Bar */}
       <div className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
-        <div className="container flex h-14 items-center justify-between">
+        <div className="container flex h-14 items-center justify-between relative">
           <div className="flex items-center gap-4">
             <Button asChild variant="ghost" size="sm">
               <Link href="/onboarding/template">
@@ -84,45 +114,67 @@ export default function ClientTemplatePreview({
             </span>
           </div>
 
+          {/* Device Controls */}
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center bg-zinc-100 dark:bg-zinc-800 p-1 rounded-lg border border-zinc-200 dark:border-zinc-700">
+             <Button
+                variant="ghost"
+                size="icon"
+                className={cn("h-8 w-8", device === 'desktop' && "bg-white dark:bg-zinc-950 shadow-sm")}
+                onClick={() => setDevice('desktop')}
+                title="Desktop view"
+             >
+                <Monitor className="h-4 w-4" />
+                <span className="sr-only">Desktop</span>
+             </Button>
+             <Button
+                variant="ghost"
+                size="icon"
+                className={cn("h-8 w-8", device === 'tablet' && "bg-white dark:bg-zinc-950 shadow-sm")}
+                onClick={() => setDevice('tablet')}
+                title="Tablet view"
+             >
+                <Tablet className="h-4 w-4" />
+                <span className="sr-only">Tablet</span>
+             </Button>
+             <Button
+                variant="ghost"
+                size="icon"
+                className={cn("h-8 w-8", device === 'mobile' && "bg-white dark:bg-zinc-950 shadow-sm")}
+                onClick={() => setDevice('mobile')}
+                title="Mobile view"
+             >
+                <Smartphone className="h-4 w-4" />
+                <span className="sr-only">Mobile</span>
+             </Button>
+          </div>
+
           <UseTemplateButton 
             templateId={template.id} 
             customizations={{
               theme: customTheme,
               font: customFont
-              // We need to update UseTemplateButton to accept colors if we want to save them properly
-              // The current server action only takes theme and font strings.
-              // We updated actions/templates.ts to accept 'theme' and 'font'.
-              // If we want to save custom colors, we'll need to send them somehow.
-              // But for now, let's stick to the plan which saves theme ID and font ID.
-              // The server action currently stores them.
             }}
           />
         </div>
       </div>
 
-      {/* Template Preview */}
-      <div 
-        className="flex-1"
-        style={{
-            // @ts-ignore
-            "--header-offset": "3.5rem",
-        } as React.CSSProperties}
-      >
-        <RenderTemplate
-          components={components}
-          data={fakeContent}
-          showBranding={true}
-          templateSlug={template.slug}
-          customTheme={customTheme}
-          customFont={customFont}
-          // Pass custom colors for preview
-          customColors={customColors ? {
-              primary: customColors.primary,
-              background: customColors.background,
-              secondary: '#f8fafc', // default fallback
-              foreground: '#0f172a' // default fallback
-          } : undefined}
-        />
+      {/* Template Preview Area */}
+      <div className="w-full h-[calc(100vh-3.5rem)] overflow-hidden flex items-center justify-center p-4 bg-zinc-100 dark:bg-zinc-900/50">
+        <div 
+            className={cn(
+                "transition-all duration-300 ease-in-out bg-white shadow-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800",
+                device === 'desktop' && "w-full h-full rounded-md",
+                device === 'tablet' && "w-[768px] h-[90%] rounded-lg",
+                device === 'mobile' && "w-[375px] h-[85%] rounded-[2rem] border-4 border-zinc-800 dark:border-zinc-700"
+            )}
+        >
+            <iframe
+                ref={iframeRef}
+                src={`/onboarding/template/${template.slug}/frame?theme=${customTheme}&font=${customFont}${customColors ? `&primary=${encodeURIComponent(customColors.primary)}&background=${encodeURIComponent(customColors.background)}` : ''}`}
+                className="w-full h-full border-0 bg-white"
+                title="Template Preview"
+            />
+        </div>
       </div>
 
       {/* Customizer */}
