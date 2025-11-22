@@ -3,6 +3,7 @@ import { getBusinessBySlug } from "@/actions/business/getBusinessBySlug";
 import { getBusinessActiveTemplate } from "@/actions/templates/getBusinessActiveTemplate";
 import { getTemplateBySlug } from "@/actions/templates";
 import ClientFrame from "@/components/template/ClientFrame";
+import { BusinessData } from "@/actions/business";
 
 interface PageProps {
   params: Promise<{ businessSlug: string }>;
@@ -11,7 +12,7 @@ interface PageProps {
 
 // Helper to map business data to template content
 // (Reuse logic from dashboard/appearance/preview/frame/page.tsx)
-function mapBusinessDataToContent(data: any) {
+function mapBusinessDataToContent(data: BusinessData) {
   return {
       HeroSection: {
           headline: data.tagline || data.category || "Professional Services",
@@ -76,7 +77,18 @@ export default async function PreviewPage({ params, searchParams }: PageProps) {
   if (!template) notFound();
 
   // Merge business data with template structure
-  const content = mapBusinessDataToContent(business);
+  const defaultContent = mapBusinessDataToContent(business);
+  const generatedContent = business.siteContent || {};
+
+  // Merge generated content into default content (section by section)
+  const content: Record<string, any> = { ...defaultContent };
+  Object.keys(generatedContent).forEach((key) => {
+    if (content[key] && typeof content[key] === 'object' && typeof generatedContent[key] === 'object') {
+      content[key] = { ...content[key], ...generatedContent[key] };
+    } else {
+      content[key] = generatedContent[key];
+    }
+  });
 
   const components = Array.isArray(template.components)
       ? template.components

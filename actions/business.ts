@@ -19,7 +19,8 @@ export interface BusinessData {
     serviceAreas: string[];
     hours: any;
     socialLinks: any;
-    theme?: any; // Added theme field for preview customization
+    theme?: any;
+    siteContent?: any; // Added site content field
 }
 
 /**
@@ -50,7 +51,8 @@ export async function getBusinessData(): Promise<BusinessData | null> {
                 b.service_areas,
                 b.hours,
                 b.social_links,
-                b.theme
+                b.theme,
+                b.site_content
              FROM users u
              INNER JOIN businesses b ON b.user_id = u.id
              WHERE u.clerk_id = $1
@@ -80,6 +82,7 @@ export async function getBusinessData(): Promise<BusinessData | null> {
             hours: row.hours || {},
             socialLinks: row.social_links || {},
             theme: row.theme || {},
+            siteContent: row.site_content || {},
         };
     } catch (error) {
         console.error('Error fetching business data:', error);

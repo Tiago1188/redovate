@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Spinner } from "@/components/ui/spinner";
 import { Sparkles } from "lucide-react";
+import { generateSiteContent } from "@/actions/ai/generate";
+import { toast } from "sonner";
 
 const loadingMessages = [
   "Analyzing your business information…",
@@ -17,6 +19,7 @@ export default function GeneratingPage() {
   const router = useRouter();
   const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
   const [isVisible, setIsVisible] = useState(true);
+  const hasStartedGeneration = useRef(false);
 
   // Cycle through messages every 2.5 seconds
   useEffect(() => {
@@ -36,16 +39,27 @@ export default function GeneratingPage() {
     return () => clearInterval(messageInterval);
   }, []);
 
-  // Auto-redirect after all messages are shown
+  // Trigger generation on mount
   useEffect(() => {
-    if (currentMessageIndex === loadingMessages.length - 1) {
-      const redirectTimer = setTimeout(() => {
-        router.push("/dashboard");
-      }, 3000);
+    if (hasStartedGeneration.current) return;
+    hasStartedGeneration.current = true;
 
-      return () => clearTimeout(redirectTimer);
-    }
-  }, [currentMessageIndex, router]);
+    const generate = async () => {
+      try {
+        await generateSiteContent();
+        // Add a small delay to ensure the last message is seen or just transition smoothly
+        router.push("/dashboard");
+      } catch (error) {
+        console.error("Generation failed:", error);
+        toast.error("Failed to generate content. Please try again.");
+        // Redirect to dashboard anyway so they aren't stuck, or back to onboarding?
+        // Dashboard is safer, they can edit manually.
+        router.push("/dashboard");
+      }
+    };
+
+    generate();
+  }, [router]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-zinc-50 via-indigo-50/30 to-indigo-100/20 dark:from-zinc-950 dark:via-indigo-950/30 dark:to-indigo-900/20">

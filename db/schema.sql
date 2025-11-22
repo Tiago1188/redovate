@@ -105,6 +105,7 @@ CREATE TABLE IF NOT EXISTS businesses(
         phone TEXT,
         mobile TEXT,
         social_links JSONB DEFAULT '{}',
+        site_content JSONB DEFAULT '{}',
 
         website_url TEXT,
 
@@ -156,6 +157,15 @@ DO $$
 BEGIN
     BEGIN
         ALTER TABLE templates ADD COLUMN fake_content JSONB DEFAULT '{}'::jsonb;
+    EXCEPTION
+        WHEN duplicate_column THEN NULL;
+    END;
+END $$;
+
+DO $$
+BEGIN
+    BEGIN
+        ALTER TABLE businesses ADD COLUMN site_content JSONB DEFAULT '{}'::jsonb;
     EXCEPTION
         WHEN duplicate_column THEN NULL;
     END;
