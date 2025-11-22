@@ -112,33 +112,31 @@ export default function ClientTemplatePreview({
     });
   };
 
+  const postMessage = (type: string, payload: any) => {
+    if (iframeRef.current?.contentWindow) {
+      iframeRef.current.contentWindow.postMessage({ type, payload }, '*');
+    }
+  };
+
   // Post messages to iframe when state changes
   useEffect(() => {
-    if (iframeRef.current?.contentWindow) {
-      iframeRef.current.contentWindow.postMessage({
-        type: 'UPDATE_THEME',
-        payload: customTheme
-      }, '*');
-    }
+    postMessage('UPDATE_THEME', customTheme);
   }, [customTheme]);
 
   useEffect(() => {
-    if (iframeRef.current?.contentWindow) {
-      iframeRef.current.contentWindow.postMessage({
-        type: 'UPDATE_FONT',
-        payload: customFont
-      }, '*');
-    }
+    postMessage('UPDATE_FONT', customFont);
   }, [customFont]);
 
   useEffect(() => {
-    if (iframeRef.current?.contentWindow) {
-      iframeRef.current.contentWindow.postMessage({
-        type: 'UPDATE_COLORS',
-        payload: customColors
-      }, '*');
-    }
+    postMessage('UPDATE_COLORS', customColors);
   }, [customColors]);
+
+  // Re-sync state when iframe loads (e.g. initial load or after navigation)
+  const handleIframeLoad = () => {
+    postMessage('UPDATE_THEME', customTheme);
+    postMessage('UPDATE_FONT', customFont);
+    postMessage('UPDATE_COLORS', customColors);
+  };
 
   return (
     <div className="min-h-screen bg-zinc-100 dark:bg-zinc-950 flex flex-col relative overflow-hidden">
@@ -238,7 +236,8 @@ export default function ClientTemplatePreview({
         >
             <iframe
                 ref={iframeRef}
-                src={`${iframeUrl}${iframeUrl.includes('?') ? '&' : '?'}theme=${customTheme}&font=${customFont}${customColors ? `&primary=${encodeURIComponent(customColors.primary)}&background=${encodeURIComponent(customColors.background)}` : ''}`}
+                src={iframeUrl}
+                onLoad={handleIframeLoad}
                 className="w-full h-full border-0 bg-white"
                 title="Template Preview"
             />
