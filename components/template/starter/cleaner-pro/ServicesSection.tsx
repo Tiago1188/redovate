@@ -1,0 +1,106 @@
+import { Card } from "@/components/ui/card";
+import {
+  Zap,
+  Home,
+  Building2,
+  Wrench,
+  ShieldCheck,
+  Clock,
+  Sparkles,
+  BedDouble,
+  ArrowRight,
+  LucideIcon,
+} from "lucide-react";
+
+type ServiceItem = {
+  title: string;
+  description: string;
+  icon?: string; 
+};
+
+export interface ServicesSectionData {
+  heading?: string;
+  subheading?: string;
+  services?: ServiceItem[];
+}
+
+const ICONS: Record<string, LucideIcon> = {
+  zap: Zap,
+  home: Home,
+  building: Building2,
+  wrench: Wrench,
+  shield: ShieldCheck,
+  clock: Clock,
+  sparkles: Sparkles,
+  bed: BedDouble,
+};
+
+export function ServicesSection({ data }: { data?: ServicesSectionData }) {
+  const services =
+    data?.services ??
+    [
+      {
+        icon: "home",
+        title: "Residential",
+        description: "Deep cleaning for houses and apartments.",
+      },
+      {
+        icon: "building",
+        title: "Commercial",
+        description: "Office and workspace maintenance.",
+      },
+      {
+        icon: "bed",
+        title: "Airbnb",
+        description: "Turnover cleaning for hosts.",
+      },
+    ];
+
+  return (
+    <section id="services" className="py-24 bg-background relative">
+      <div className="container mx-auto px-4">
+        <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-4">
+          <div className="max-w-2xl">
+            <span className="text-primary font-semibold tracking-wider uppercase text-sm mb-2 block">Our Expertise</span>
+            <h2 className="text-4xl font-bold mb-4 tracking-tight">
+              {data?.heading ?? "Premium Cleaning Services"}
+            </h2>
+            <p className="text-lg text-muted-foreground">
+              {data?.subheading ?? "We offer a comprehensive range of cleaning solutions tailored to your specific needs."}
+            </p>
+          </div>
+          <a href="#contact" className="group flex items-center font-semibold text-primary hover:text-primary/80 transition-colors">
+            View All Services <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+          </a>
+        </div>
+
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {services.map((service, index) => {
+            const Icon = (service.icon && ICONS[service.icon]) || Sparkles;
+            return (
+              <Card 
+                key={index} 
+                className="group relative p-8 bg-secondary/20 hover:bg-primary text-foreground hover:text-primary-foreground border-0 transition-all duration-300 overflow-hidden"
+              >
+                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                   <Icon className="w-24 h-24" />
+                </div>
+                
+                <div className="relative z-10">
+                  <div className="w-12 h-12 rounded-full bg-background group-hover:bg-white/20 flex items-center justify-center mb-6 transition-colors shadow-sm">
+                    <Icon className="w-6 h-6 text-primary group-hover:text-white" />
+                  </div>
+                  
+                  <h3 className="text-xl font-bold mb-3">{service.title}</h3>
+                  <p className="text-muted-foreground group-hover:text-primary-foreground/90 text-sm leading-relaxed">
+                    {service.description}
+                  </p>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}

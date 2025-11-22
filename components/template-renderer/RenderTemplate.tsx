@@ -1,6 +1,7 @@
 import TemplatePageWrapper from "./TemplatePageWrapper";
 import * as Free from "../template/free";
 import * as VoltagePro from "../template/starter/voltage-pro";
+import * as CleanerPro from "../template/starter/cleaner-pro";
 import { THEME_PRESETS } from "@/data/theme-presets";
 import * as Fonts from "@/lib/fonts";
 
@@ -25,12 +26,23 @@ const VOLTAGE_PRO_MAP = {
   FooterSection: VoltagePro.FooterSection,
 };
 
+const CLEANER_PRO_MAP = {
+  NavigationSection: CleanerPro.NavigationSection,
+  HeroSection: CleanerPro.HeroSection,
+  ServicesSection: CleanerPro.ServicesSection,
+  ServiceAreasSection: CleanerPro.ServiceAreasSection,
+  AboutSection: CleanerPro.AboutSection,
+  ContactSection: CleanerPro.ContactSection,
+  FooterSection: CleanerPro.FooterSection,
+};
+
 // Map template slugs/names to their component maps
 // We'll use a default fallback if the exact slug isn't found
 const THEME_MAPS: Record<string, any> = {
   "default": FREE_MAP,
   "voltage-pro-free": VOLTAGE_PRO_MAP,
   "voltage-pro": VOLTAGE_PRO_MAP,
+  "cleaner-pro-free": CLEANER_PRO_MAP,
 };
 
 type SectionComponent = {
