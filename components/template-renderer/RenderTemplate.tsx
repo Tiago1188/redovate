@@ -66,13 +66,15 @@ export default function RenderTemplate({
   const sectionMap = THEME_MAPS[templateSlug] || THEME_MAPS["default"];
 
   // Determine the base theme class
-  // If customTheme is provided and not "default", use it.
-  // Otherwise, fallback to the template's default theme logic.
+  // If customTheme is provided, use it.
+  // If not provided, check template slug or fallback to neutral
   let themeClass = "";
-  if (customTheme && customTheme !== "default") {
+  if (customTheme) {
     themeClass = customTheme;
   } else {
-    themeClass = templateSlug.includes('voltage-pro') ? 'theme-voltage-pro' : '';
+    // Fallback to template default if no custom theme is active (initial load)
+    // If it's not voltage pro, we default to 'theme-neutral' which is the template default
+    themeClass = templateSlug.includes('voltage-pro') ? 'theme-voltage-pro' : 'theme-neutral';
   }
 
   // Append custom font class if provided

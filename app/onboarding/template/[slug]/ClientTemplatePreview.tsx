@@ -22,7 +22,9 @@ export default function ClientTemplatePreview({
   fakeContent,
   userPlan,
 }: ClientTemplatePreviewProps) {
-  const [customTheme, setCustomTheme] = useState<string>("default");
+  const [customTheme, setCustomTheme] = useState<string>(
+    template.slug.includes('voltage-pro') ? 'theme-voltage-pro' : 'theme-neutral'
+  );
   const [customFont, setCustomFont] = useState<string>("inter");
   const [customColors, setCustomColors] = useState<{
     primary: string;

@@ -14,26 +14,37 @@ export const FONT_OPTIONS = [
 
 export const THEME_PRESETS = [
   { 
-    id: 'default', 
+    id: 'theme-neutral', 
     name: 'Default', 
     colors: {
-      primary: '#e2e8f0', // slate-200
-      secondary: '#f8fafc', // slate-50
+      primary: '#171717', // neutral-900
+      secondary: '#f5f5f5', // neutral-100
       background: '#ffffff',
-      foreground: '#020817'
+      foreground: '#1a1a1a'
     },
-    previewClass: 'bg-zinc-200 border-zinc-300'
+    previewClass: 'bg-neutral-700 border-neutral-800'
+  },
+  { 
+    id: 'theme-blue', 
+    name: 'Blue', 
+    colors: {
+      primary: '#3b82f6', // Blue
+      secondary: '#eff6ff', 
+      background: '#ffffff',
+      foreground: '#0f172a'
+    },
+    previewClass: 'bg-blue-500 border-blue-600'
   },
   { 
     id: 'theme-voltage-pro', 
     name: 'Voltage Pro', 
     colors: {
-      primary: '#0f172a',
+      primary: '#f97316', // Orange (matches CSS)
       secondary: '#f8fafc',
       background: '#ffffff',
       foreground: '#0f172a'
     },
-    previewClass: 'bg-[#0f172a] border-[#1e293b]'
+    previewClass: 'bg-orange-500 border-orange-600'
   },
   { 
     id: 'theme-violet', 
@@ -80,4 +91,3 @@ export const THEME_PRESETS = [
     previewClass: 'bg-yellow-400 border-yellow-500'
   },
 ];
-
