@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Eye } from "lucide-react";
 
+import { UseTemplateButton } from "@/components/template/UseTemplateButton";
+
 // Helper function to get fallback Unsplash images based on template name/slug
 function getFallbackThumbnail(templateName: string, slug: string): string {
   const name = (templateName || slug || "").toLowerCase();
@@ -95,13 +97,17 @@ export default async function DashboardTemplatesPage() {
 
                             <CardContent className="grow" />
 
-                            <CardFooter className="grid grid-cols-1 gap-3">
+                            <CardFooter className="grid grid-cols-2 gap-3">
                                 <Button asChild variant="outline" className="w-full">
-                                    <Link href={`/dashboard/templates/${template.slug}`}>
+                                    <Link href={`/template-preview/${template.slug}`}>
                                         <Eye className="mr-2 h-4 w-4" />
                                         Preview
                                     </Link>
                                 </Button>
+                                <UseTemplateButton 
+                                    templateId={template.id} 
+                                    redirectPath="/dashboard"
+                                />
                             </CardFooter>
                         </Card>
                         );

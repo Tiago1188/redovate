@@ -101,8 +101,6 @@ export default async function PreviewPage({ params, searchParams }: PageProps) {
       customColors = {
           primary: businessTheme.colors.primary,
           background: businessTheme.colors.background,
-          secondary: businessTheme.colors.secondary,
-          foreground: businessTheme.colors.foreground,
       };
   }
 

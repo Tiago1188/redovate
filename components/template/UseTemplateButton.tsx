@@ -9,10 +9,12 @@ import { toast } from "sonner";
 
 export function UseTemplateButton({ 
     templateId, 
-    customizations 
+    customizations,
+    redirectPath = "/generating"
 }: { 
     templateId: string;
     customizations?: { theme?: string; font?: string };
+    redirectPath?: string;
 }) {
     const [isPending, startTransition] = useTransition();
     const router = useRouter();
@@ -22,7 +24,7 @@ export function UseTemplateButton({
             try {
                 await saveSelectedTemplate(templateId, customizations);
                 // Redirect manually since server action redirect may not work with useTransition
-                router.push("/generating");
+                router.push(redirectPath);
             } catch (error) {
                 const errorMessage = error instanceof Error ? error.message : "Unknown error";
                 toast.error(`Failed to select template: ${errorMessage}`);
@@ -51,4 +53,3 @@ export function UseTemplateButton({
         </Button>
     );
 }
-

@@ -5,7 +5,7 @@ import { auth } from "@clerk/nextjs/server";
 
 import { getTemplatesByPlan } from "@/actions/templates";
 import { hasActiveTemplate } from "@/actions/dashboard/hasActiveTemplate";
-import { UseTemplateButton } from "./use-template-button";
+import { UseTemplateButton } from "@/components/template/UseTemplateButton";
 
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";

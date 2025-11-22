@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useTransition } from "react";
 import Link from "next/link";
 import { ArrowLeft, Monitor, Tablet, Smartphone, Loader2, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { UseTemplateButton } from "@/app/onboarding/template/use-template-button";
+import { UseTemplateButton } from "@/components/template/UseTemplateButton";
 import { TemplateCustomizer } from "@/components/template/TemplateCustomizer";
 import { THEME_PRESETS } from "@/data/theme-presets";
 import { cn } from "@/lib/utils";
@@ -19,6 +19,7 @@ interface ClientTemplatePreviewProps {
   iframeUrl: string;
   businessId?: string;
   initialTheme?: ThemeData | null;
+  redirectPath?: string;
 }
 
 type DeviceType = 'desktop' | 'tablet' | 'mobile';
@@ -31,6 +32,7 @@ export default function ClientTemplatePreview({
   iframeUrl,
   businessId,
   initialTheme,
+  redirectPath = "/generating",
 }: ClientTemplatePreviewProps) {
   // Initialize state based on mode
   const defaultTheme = template.slug.includes('voltage-pro') ? 'theme-voltage-pro' : 'theme-neutral';
@@ -202,6 +204,7 @@ export default function ClientTemplatePreview({
                     // In onboarding mode, we don't pass customizations anymore as per requirement
                     // The user selects the default template
                     customizations={undefined}
+                    redirectPath={redirectPath}
                 />
             ) : (
                 <Button 
