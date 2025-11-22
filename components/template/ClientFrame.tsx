@@ -6,48 +6,60 @@ import RenderTemplate from '@/components/template-renderer/RenderTemplate';
 interface ClientFrameProps {
   template: any;
   components: any[];
-  fakeContent: any;
+  // Use 'data' to be generic, but support 'fakeContent' prop name if used elsewhere
+  data?: any;
+  fakeContent?: any;
   initialTheme: string;
   initialFont: string;
   initialColors?: {
     primary: string;
     background: string;
   };
+  // Allow disabling message listeners for production view
+  enableListeners?: boolean;
+  showBranding?: boolean;
 }
 
 export default function ClientFrame({
   template,
   components,
+  data,
   fakeContent,
   initialTheme,
   initialFont,
   initialColors,
+  enableListeners = true,
+  showBranding = true
 }: ClientFrameProps) {
   const [theme, setTheme] = useState(initialTheme);
   const [font, setFont] = useState(initialFont);
   const [colors, setColors] = useState(initialColors);
 
+  const content = data || fakeContent || {};
+
   useEffect(() => {
+    if (!enableListeners) return;
+
     const handleMessage = (event: MessageEvent) => {
-      const data = event.data;
-      if (data.type === 'UPDATE_THEME') {
-        setTheme(data.payload);
-      } else if (data.type === 'UPDATE_FONT') {
-        setFont(data.payload);
-      } else if (data.type === 'UPDATE_COLORS') {
-        setColors(data.payload);
+      const msgData = event.data;
+      if (msgData.type === 'UPDATE_THEME') {
+        setTheme(msgData.payload);
+      } else if (msgData.type === 'UPDATE_FONT') {
+        setFont(msgData.payload);
+      } else if (msgData.type === 'UPDATE_COLORS') {
+        setColors(msgData.payload);
       }
     };
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, []);
+  }, [enableListeners]);
 
   return (
     <RenderTemplate
       components={components}
-      data={fakeContent}
-      showBranding={true}
+      data={content}
+      showBranding={showBranding}
       templateSlug={template.slug}
       customTheme={theme}
       customFont={font}
@@ -60,4 +72,3 @@ export default function ClientFrame({
     />
   );
 }
-

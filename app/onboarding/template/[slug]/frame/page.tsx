@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { getTemplateBySlug } from "@/actions/templates";
-import ClientFrame from "./ClientFrame";
+import ClientFrame from "@/components/template/ClientFrame";
 
 interface PageProps {
     params: Promise<{ slug: string }>;
@@ -42,4 +42,3 @@ export default async function TemplateFramePage({ params, searchParams }: PagePr
         />
     );
 }
-

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
 
 import { getTemplatesByPlan } from "@/actions/templates";
+import { hasActiveTemplate } from "@/actions/dashboard/hasActiveTemplate";
 import { UseTemplateButton } from "./use-template-button";
 
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,6 +40,12 @@ function getFallbackThumbnail(templateName: string, slug: string): string {
 export default async function TemplateSelectionPage() {
     const { userId } = await auth();
     if (!userId) redirect("/sign-in");
+
+    // Check if user already has an active template and redirect to dashboard if so
+    const hasTemplate = await hasActiveTemplate();
+    if (hasTemplate) {
+        redirect("/dashboard");
+    }
 
     const templates = await getTemplatesByPlan();
 

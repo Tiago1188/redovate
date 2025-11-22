@@ -1,45 +1,67 @@
 'use client';
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useTransition } from "react";
 import Link from "next/link";
-import { ArrowLeft, Monitor, Tablet, Smartphone } from "lucide-react";
+import { ArrowLeft, Monitor, Tablet, Smartphone, Loader2, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { UseTemplateButton } from "../use-template-button";
+import { UseTemplateButton } from "@/app/onboarding/template/use-template-button";
 import { TemplateCustomizer } from "@/components/template/TemplateCustomizer";
 import { THEME_PRESETS } from "@/data/theme-presets";
 import { cn } from "@/lib/utils";
+import { updateBusinessTheme, ThemeData } from "@/actions/business/theme";
+import { toast } from "sonner";
 
 interface ClientTemplatePreviewProps {
   template: any;
-  components: any[];
-  fakeContent: any;
   userPlan: 'free' | 'starter' | 'business';
+  mode: 'onboarding' | 'edit';
+  backLink: string;
+  iframeUrl: string;
+  businessId?: string;
+  initialTheme?: ThemeData | null;
 }
 
 type DeviceType = 'desktop' | 'tablet' | 'mobile';
 
 export default function ClientTemplatePreview({
   template,
-  components,
-  fakeContent,
   userPlan,
+  mode,
+  backLink,
+  iframeUrl,
+  businessId,
+  initialTheme,
 }: ClientTemplatePreviewProps) {
+  // Initialize state based on mode
+  const defaultTheme = template.slug.includes('voltage-pro') ? 'theme-voltage-pro' : 'theme-neutral';
+  
   const [customTheme, setCustomTheme] = useState<string>(
-    template.slug.includes('voltage-pro') ? 'theme-voltage-pro' : 'theme-neutral'
+    mode === 'edit' && initialTheme?.themeId ? initialTheme.themeId : defaultTheme
   );
-  const [customFont, setCustomFont] = useState<string>("inter");
+  const [customFont, setCustomFont] = useState<string>(
+    mode === 'edit' && initialTheme?.font ? initialTheme.font : "inter"
+  );
+  
+  // For colors, we use the initialTheme colors if available in edit mode, 
+  // otherwise undefined (which falls back to theme preset defaults)
   const [customColors, setCustomColors] = useState<{
     primary: string;
     background: string;
-  } | undefined>(undefined);
+  } | undefined>(
+    mode === 'edit' && initialTheme?.colors ? {
+      primary: initialTheme.colors.primary,
+      background: initialTheme.colors.background
+    } : undefined
+  );
 
   const [device, setDevice] = useState<DeviceType>('desktop');
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const [isSaving, startTransition] = useTransition();
 
   const isAllowed = userPlan !== 'free';
 
   const handleThemeChange = (themeId: string) => {
-    if (!isAllowed) return;
+    if (mode === 'onboarding' || !isAllowed) return;
     setCustomTheme(themeId);
     
     const preset = THEME_PRESETS.find(p => p.id === themeId);
@@ -54,15 +76,40 @@ export default function ClientTemplatePreview({
   };
 
   const handleFontChange = (fontId: string) => {
-    if (isAllowed) setCustomFont(fontId);
+    if (mode === 'edit' && isAllowed) setCustomFont(fontId);
   };
 
   const handleColorChange = (key: 'primary' | 'background', value: string) => {
-      if (!isAllowed) return;
+      if (mode === 'onboarding' || !isAllowed) return;
       setCustomColors(prev => {
           const base = prev || { primary: '#000000', background: '#ffffff' }; // fallback
           return { ...base, [key]: value };
       });
+  };
+
+  const handleSave = () => {
+    if (!businessId) return;
+    
+    startTransition(async () => {
+      try {
+        const themeData: ThemeData = {
+          font: customFont,
+          colors: {
+              ...(customColors || { primary: '#000000', background: '#ffffff' }),
+              // Ensure required fields if missing from customColors
+              secondary: '#f8fafc',
+              foreground: '#0f172a'
+          },
+          themeId: customTheme
+        };
+
+        await updateBusinessTheme(businessId, themeData);
+        toast.success("Appearance settings saved successfully");
+      } catch (error) {
+        console.error(error);
+        toast.error("Failed to save settings");
+      }
+    });
   };
 
   // Post messages to iframe when state changes
@@ -100,17 +147,19 @@ export default function ClientTemplatePreview({
       <div className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
         <div className="container flex h-14 items-center justify-between relative">
           <div className="flex items-center gap-4">
-            <Button asChild variant="ghost" size="sm">
-              <Link href="/onboarding/template">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to templates
+            <Button asChild variant="ghost" size="icon" className="sm:w-auto sm:px-4">
+              <Link href={backLink}>
+                <ArrowLeft className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">
+                  {mode === 'onboarding' ? 'Back to templates' : 'Back to dashboard'}
+                </span>
               </Link>
             </Button>
 
-            <div className="h-6 w-px bg-border" />
+            <div className="hidden sm:block h-6 w-px bg-border" />
 
             <span className="font-medium text-sm hidden sm:inline-block">
-              Previewing: {template.name}
+              {mode === 'onboarding' ? 'Previewing: ' : 'Editing: '} {template.name}
             </span>
           </div>
 
@@ -148,13 +197,32 @@ export default function ClientTemplatePreview({
              </Button>
           </div>
 
-          <UseTemplateButton 
-            templateId={template.id} 
-            customizations={{
-              theme: customTheme,
-              font: customFont
-            }}
-          />
+          <div>
+            {mode === 'onboarding' ? (
+                <UseTemplateButton 
+                    templateId={template.id} 
+                    // In onboarding mode, we don't pass customizations anymore as per requirement
+                    // The user selects the default template
+                    customizations={undefined}
+                />
+            ) : (
+                <Button 
+                    onClick={handleSave} 
+                    disabled={isSaving}
+                    className="bg-primary text-primary-foreground mr-2 sm:mr-0"
+                    size="sm"
+                >
+                    {isSaving ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                        <>
+                            <Save className="h-4 w-4 sm:mr-2" />
+                            <span className="hidden sm:inline">Save Changes</span>
+                        </>
+                    )}
+                </Button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -170,23 +238,25 @@ export default function ClientTemplatePreview({
         >
             <iframe
                 ref={iframeRef}
-                src={`/onboarding/template/${template.slug}/frame?theme=${customTheme}&font=${customFont}${customColors ? `&primary=${encodeURIComponent(customColors.primary)}&background=${encodeURIComponent(customColors.background)}` : ''}`}
+                src={`${iframeUrl}${iframeUrl.includes('?') ? '&' : '?'}theme=${customTheme}&font=${customFont}${customColors ? `&primary=${encodeURIComponent(customColors.primary)}&background=${encodeURIComponent(customColors.background)}` : ''}`}
                 className="w-full h-full border-0 bg-white"
                 title="Template Preview"
             />
         </div>
       </div>
 
-      {/* Customizer */}
-      <TemplateCustomizer
-        currentTheme={customTheme}
-        currentFont={customFont}
-        currentColors={customColors}
-        onThemeChange={handleThemeChange}
-        onFontChange={handleFontChange}
-        onColorChange={handleColorChange}
-        userPlan={userPlan}
-      />
+      {/* Customizer - Only in Edit Mode */}
+      {mode === 'edit' && (
+          <TemplateCustomizer
+            currentTheme={customTheme}
+            currentFont={customFont}
+            currentColors={customColors}
+            onThemeChange={handleThemeChange}
+            onFontChange={handleFontChange}
+            onColorChange={handleColorChange}
+            userPlan={userPlan}
+          />
+      )}
     </div>
   );
 }

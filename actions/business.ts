@@ -6,11 +6,20 @@ import pool from "@/lib/db";
 export interface BusinessData {
     id: string;
     businessName: string;
+    slug: string;
     about: string | null;
     category: string | null;
+    tagline: string | null;
+    phone: string | null;
+    email: string | null;
+    heroImage: string | null;
+    logo: string | null;
     services: string[];
     locations: any[];
     serviceAreas: string[];
+    hours: any;
+    socialLinks: any;
+    theme?: any; // Added theme field for preview customization
 }
 
 /**
@@ -28,11 +37,20 @@ export async function getBusinessData(): Promise<BusinessData | null> {
             `SELECT 
                 b.id,
                 b.business_name,
+                b.slug,
                 b.about,
                 b.category,
+                b.tagline,
+                b.phone,
+                b.email,
+                b.hero_image,
+                b.logo,
                 b.services,
                 b.locations,
-                b.service_areas
+                b.service_areas,
+                b.hours,
+                b.social_links,
+                b.theme
              FROM users u
              INNER JOIN businesses b ON b.user_id = u.id
              WHERE u.clerk_id = $1
@@ -48,15 +66,23 @@ export async function getBusinessData(): Promise<BusinessData | null> {
         return {
             id: row.id,
             businessName: row.business_name,
+            slug: row.slug,
             about: row.about,
             category: row.category,
+            tagline: row.tagline,
+            phone: row.phone,
+            email: row.email,
+            heroImage: row.hero_image,
+            logo: row.logo,
             services: Array.isArray(row.services) ? row.services : [],
             locations: Array.isArray(row.locations) ? row.locations : [],
             serviceAreas: Array.isArray(row.service_areas) ? row.service_areas : [],
+            hours: row.hours || {},
+            socialLinks: row.social_links || {},
+            theme: row.theme || {},
         };
     } catch (error) {
         console.error('Error fetching business data:', error);
         return null;
     }
 }
-
