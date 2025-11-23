@@ -1,30 +1,35 @@
 import React from "react";
-import { Star, Sparkles, ShieldCheck, Clock } from "lucide-react";
+import { Star, Sparkles, ShieldCheck, Clock, CheckCircle } from "lucide-react";
 
-export function ServicesSection({ data, theme }: { data?: any; theme?: any }) {
+interface ServiceItem {
+  title: string;
+  description: string;
+}
+
+interface ServicesData {
+  services?: ServiceItem[];
+}
+
+export function ServicesSection({ data, theme }: { data?: ServicesData; theme?: any }) {
   const primaryColor = theme?.primary || "#0ea5e9";
   
-  const services = data?.services || [
-    { 
-        title: "Regular Cleaning", 
-        description: "Weekly or fortnightly visits to keep your home pristine.",
-        icon: Sparkles
-    },
-    { 
-        title: "Deep Cleaning", 
-        description: "Thorough top-to-bottom clean for spring cleaning or special occasions.",
-        icon: ShieldCheck
-    },
-    { 
-        title: "End of Lease", 
-        description: "Guarantee your bond back with our detailed exit cleaning service.",
-        icon: Clock 
-    }
-  ];
+  // Enforce min 3, max 5 services
+  const rawServices = Array.isArray(data?.services) ? data.services : [];
+  const services = rawServices.slice(0, 5);
+
+  // Fallback if fewer than 3 (should be handled by AI/validation but good for UI)
+  if (services.length < 3 && rawServices.length === 0) {
+      // Default placeholders if absolutely no data
+      services.push(
+          { title: "Service 1", description: "Description for service 1." },
+          { title: "Service 2", description: "Description for service 2." },
+          { title: "Service 3", description: "Description for service 3." }
+      );
+  }
 
   // Helper to get icon component if available or fallback
   const getIcon = (idx: number) => {
-    const icons = [Sparkles, ShieldCheck, Clock];
+    const icons = [Sparkles, ShieldCheck, Clock, Star, CheckCircle];
     return icons[idx % icons.length];
   };
 
@@ -39,14 +44,14 @@ export function ServicesSection({ data, theme }: { data?: any; theme?: any }) {
             Our Expertise
           </span>
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-zinc-900">
-            {data?.heading || "Professional Cleaning Services"}
+            Our Services
           </h2>
           <p className="text-base md:text-lg text-zinc-600 leading-relaxed">
-            We offer a comprehensive range of cleaning solutions designed to meet your unique requirements, ensuring a spotless environment every time.
+            Professional services tailored to your needs.
           </p>
         </div>
 
-        <div className="grid gap-6 md:gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 md:gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 justify-center">
           {services.map((service: any, idx: number) => {
             const Icon = getIcon(idx);
             
@@ -71,18 +76,13 @@ export function ServicesSection({ data, theme }: { data?: any; theme?: any }) {
                   
                   <div>
                     <h3 className="text-xl md:text-2xl font-bold text-zinc-900 mb-2 md:mb-3 group-hover:text-blue-600 transition-colors">
-                        {service.title}
+                        {service.title || service}
                     </h3>
                     <p className="text-sm md:text-base text-zinc-600 leading-relaxed">
-                        {service.description}
+                        {service.description || "Professional service description."}
                     </p>
                   </div>
                   
-                  <div className="pt-2">
-                    <span className="text-sm font-semibold text-zinc-400 group-hover:text-zinc-900 transition-colors flex items-center gap-2">
-                        Learn more <span className="text-lg">&rarr;</span>
-                    </span>
-                  </div>
                 </div>
               </div>
             );
@@ -92,3 +92,4 @@ export function ServicesSection({ data, theme }: { data?: any; theme?: any }) {
     </section>
   );
 }
+

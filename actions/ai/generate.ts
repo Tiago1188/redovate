@@ -39,31 +39,45 @@ export async function generateSiteContent() {
     
     const componentTypes = components.map((c: { type: string }) => c.type).join(", ");
 
+    const locations = businessData.locations && businessData.locations.length > 0 
+        ? businessData.locations.map((l: any) => l.location).join(", ")
+        : 'Local Area';
+
     let systemPrompt = `You are an expert copywriter and SEO specialist generating content for a local business website.
     
     Business Details:
     - Name: ${businessData.businessName}
     - Type: ${businessData.category || 'General Business'}
     - Services: ${businessData.services.join(", ")}
-    - Location: ${businessData.locations[0]?.location || 'Local Area'}
+    - Locations: ${locations}
     - About (User Input): ${businessData.about || ''}
     
     Instructions:
     - Generate professional, engaging content ONLY for the following components: ${componentTypes}.
     - Do NOT generate content for components not listed.
     - Ensure the tone is professional yet approachable.
-    - Use the business location to enhance local SEO appeal.
     - Map fields precisely to the schema provided.
+
+    KEYWORD STRATEGY:
+    - Generate SEO keywords based on REAL user search intent.
+    - Include combinations of:
+      1. [Service] + [Location] (e.g., "Carpenter in Sydney")
+      2. [Service] + "near me"
+      3. [Business Name]
+      4. "Best" + [Service] + [Location]
     `;
 
     if (isStarterOrHigher) {
         systemPrompt += `
         PLAN: STARTER/BUSINESS (PREMIUM)
         - Generate comprehensive, detailed descriptions.
-        - Provide 10+ high-value SEO keywords in the MetaSection.
-        - Create 3-4 distinct, detailed testimonials for the TestimonialsSection (if requested).
-        - For Services, write rich, benefit-oriented descriptions (2-3 sentences each).
-        - Create a compelling, detailed "About Us" story expanding on the user's input.
+        - Tagline: Short and punchy. Optional sub-tagline recommended.
+        - Services: Generate between 5 to 15 services. Write rich, benefit-oriented descriptions (2-3 sentences each).
+        - Service Areas: Use the provided business locations. If the component requires content, populate it with the provided locations. Do NOT invent new locations unless necessary for layout.
+        - About: Create a compelling, detailed "About Us" story (300-500 characters) expanding on the user's input.
+        - Keywords: Provide 10-15 high-value SEO keywords using the strategy above.
+        - Testimonials: Create 3-4 distinct, detailed testimonials (if requested).
+        - Footer: Include placeholder for License number if applicable.
         - For Voltage Pro template:
             - AboutSection: Include 3 features (Licensed & Insured, Working Hours, Quality Guarantee) and 3 relevant certifications.
             - NavigationSection: Generate links for Home, Services, Service Areas, About, Contact.
@@ -71,11 +85,17 @@ export async function generateSiteContent() {
     } else {
         systemPrompt += `
         PLAN: FREE
-        - Keep descriptions concise and direct.
-        - Provide exactly 5 SEO keywords in the MetaSection.
-        - Generate 1 generic testimonial if the section exists.
-        - For Services, write brief, single-sentence descriptions.
-        - Keep the "About Us" text standard and functional.
+        - STRICTLY LIMIT content to the following requirements:
+        - Services: Generate 3 to 5 services. Descriptions must be 1-2 sentences max.
+        - Keywords: Provide 3 to 5 SEO keywords using the strategy above.
+        - About: Keep the "About Us" text short (2-3 sentences).
+        - Tagline: Short and punchy (8-12 words max).
+        - Location: Focus on exactly one primary location.
+        - NO Certifications.
+        - NO FAQ generation.
+        - NO Social links.
+        - NO secondary CTA.
+        - NO extra images or premium content.
         `;
     }
 

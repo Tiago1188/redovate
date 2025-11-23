@@ -11,10 +11,16 @@ const ThemeStyles = ({ theme }: { theme: any }) => {
   );
 };
 
-export function HeroSection({ data, theme }: { data?: any; theme?: any }) {
+interface HeroData {
+  business_name?: string;
+  hero_image?: string;
+  tagline?: string;
+}
+
+export function HeroSection({ data, theme }: { data?: HeroData; theme?: any }) {
   const heroImage = data?.hero_image || "https://images.unsplash.com/photo-1598514982842-ffe228d3ccf8?q=80&auto=format&fit=crop&w=1600";
   const primaryColor = theme?.primary || "#0ea5e9";
-  console.log(heroImage);
+
   return (
     <section className="relative min-h-[600px] flex items-center justify-center overflow-hidden">
       <ThemeStyles theme={theme} />
@@ -31,14 +37,8 @@ export function HeroSection({ data, theme }: { data?: any; theme?: any }) {
 
       {/* Content */}
       <div className="relative z-10 max-w-5xl mx-auto px-6 text-center space-y-6 md:space-y-8 py-12 md:py-20">
-        <span 
-            className="inline-block px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white text-xs md:text-sm font-medium tracking-wide uppercase"
-        >
-            {data?.highlight || "Professional Services"}
-        </span>
-        
         <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight text-white drop-shadow-xl leading-tight">
-          {data?.headline || data?.business_name || "SparkleClean"}
+          {data?.business_name || "Business Name"}
         </h1>
 
         {data?.tagline && (
@@ -53,13 +53,7 @@ export function HeroSection({ data, theme }: { data?: any; theme?: any }) {
             className="w-full sm:w-auto inline-flex items-center justify-center px-8 py-4 text-base md:text-lg font-bold text-white transition-all duration-200 rounded-full shadow-lg hover:shadow-xl hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-black"
             style={{ backgroundColor: primaryColor }}
           >
-            {data?.cta_primary || "Book Now"}
-          </a>
-          <a
-            href="#services"
-            className="w-full sm:w-auto inline-flex items-center justify-center px-8 py-4 text-base md:text-lg font-bold text-white transition-all duration-200 bg-white/10 border border-white/20 rounded-full backdrop-blur-sm hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black"
-          >
-            View Services
+            Book Now
           </a>
         </div>
       </div>
@@ -83,3 +77,4 @@ export function HeroSection({ data, theme }: { data?: any; theme?: any }) {
     </section>
   );
 }
+

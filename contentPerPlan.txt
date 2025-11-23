@@ -1,0 +1,80 @@
+FREE PLAN — REQUIREMENTS (FINAL)
+
+Required fields
+
+Business Name
+ABN
+Phone OR Mobile (must have at least one)
+Logo/Profile picture (user upload or AI placeholder)
+Hero Image
+Short tagline (8–12 words max)
+Services (minimum 3, maximum 5)
+Short service descriptions (1–2 sentences each)
+Location (only 1)
+Short About section (2–3 sentences)
+SEO Keywords (minimum 3, maximum 5)
+
+Free plan restrictions
+
+FAQ not allowed
+Certifications not allowed
+No long “About” story
+No extended SEO (only up to 5 keywords)
+No color theme customization
+No custom font selection
+No premium sections
+
+STARTER PLAN — REQUIREMENTS (FINAL)
+
+Required fields
+
+Business Name
+ABN
+Email
+Phone or Mobile (at least one, both allowed)
+Logo/Profile picture
+Hero image
+Tagline (short, punchy)
+Sub-tagline (optional but recommended)
+Services (minimum 5, max 15)
+Service descriptions (2–3 sentences each)
+Locations / Service Areas (at least 3, max 5)
+About section (300–500 characters, more detailed than free plan)
+SEO Keywords (min5 – max 15 keywords)
+
+Footer information
+
+Business Name
+ABN
+Email
+Phone
+License (if applicable)
+
+Optional fields
+
+Certifications list
+Social links
+Secondary CTA
+Navigation menu with custom labels
+Additional service sections
+Additional images (gallery-style)
+Bullet-point features list
+Working hours
+Starter plan enhancements over Free
+Longer, story-based About section
+Extended SEO keyword list
+More detailed services (benefit-driven)
+Up to 5 certifications
+Navigation menu customization
+Color palette customization
+Font selection (from allowed Starter fonts list)
+Full access to professional template layouts
+More prominent hero CTAs (dual CTA allowed)
+
+
+Starter plan restrictions
+
+AI image generation limited to few per page
+No ultra-premium sections (case studies, pricing tables, blog posts, portfolios)
+No deep SEO (20+ keywords, meta-schema)
+Limited footer customization

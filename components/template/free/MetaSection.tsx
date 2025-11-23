@@ -1,7 +1,23 @@
-export function MetaSection({ data }: { data: any }) {
-    // Meta section usually doesn't render visible content in the preview body, 
-    // but might show SEO preview or just be hidden.
-    // For preview purposes, we might skip it or show a small badge.
-    return null;
+interface MetaData {
+    keywords?: string[];
 }
+
+export function MetaSection({ data }: { data?: MetaData }) {
+    // Meta section: accepts only 3-5 keywords.
+    // Render them as hidden or as meta tags if this was a real head component.
+    // For visual template, we can perhaps show them as tags or just hide them.
+    // Spec: "Ensure MetaSection accepts only 3–5 keywords."
+    
+    const keywords = Array.isArray(data?.keywords) ? data.keywords.slice(0, 5) : [];
+    
+    if (keywords.length === 0) return null;
+
+    return (
+        <div className="hidden">
+            {/* SEO Keywords (Hidden from view but present in structure) */}
+            {keywords.join(", ")}
+        </div>
+    );
+}
+
 

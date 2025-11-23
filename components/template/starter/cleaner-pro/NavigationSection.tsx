@@ -41,24 +41,26 @@ export function NavigationSection({ data }: { data?: NavigationSectionData }) {
     <nav
       style={{ top: "var(--header-offset, 0px)" }}
       className={`fixed left-0 right-0 z-50 transition-all duration-300 ${
-        isScrolled ? "bg-background/95 backdrop-blur-md shadow-lg" : "bg-transparent"
+        isScrolled || isMobileMenuOpen ? "bg-background/95 backdrop-blur-md shadow-lg" : "bg-transparent"
       }`}
     >
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-20">
           <button
             onClick={() => scrollToSection("hero")}
-            className="flex items-center gap-2 text-2xl font-bold hover:opacity-80 transition-opacity text-primary"
+            className="flex items-center gap-2 text-xl md:text-2xl font-bold hover:opacity-80 transition-opacity text-primary text-left max-w-[75%] md:max-w-[500px] lg:max-w-none"
           >
-            {data?.business_name ?? "Your Business"}
+            <span className="truncate">
+               {data?.business_name ?? "Your Business"}
+            </span>
           </button>
 
-          <div className="hidden md:flex items-center gap-8">
+          <div className="hidden lg:flex items-center gap-6 xl:gap-8">
             {links.map((link) => (
               <button
                 key={link.id}
                 onClick={() => scrollToSection(link.id)}
-                className="text-foreground/80 hover:text-primary font-medium transition-colors"
+                className="text-foreground/80 hover:text-primary font-medium transition-colors whitespace-nowrap"
               >
                 {link.label}
               </button>
@@ -69,7 +71,7 @@ export function NavigationSection({ data }: { data?: NavigationSectionData }) {
           </div>
 
           <button
-            className="md:hidden text-foreground"
+            className="lg:hidden text-foreground p-2 -mr-2"
             onClick={() => setIsMobileMenuOpen((v) => !v)}
             aria-label="Toggle menu"
           >
@@ -78,7 +80,7 @@ export function NavigationSection({ data }: { data?: NavigationSectionData }) {
         </div>
 
         {isMobileMenuOpen && (
-          <div className="md:hidden py-4 border-t border-border">
+          <div className="lg:hidden py-4 border-t border-border bg-background/95 backdrop-blur-md">
             {links.map((link) => (
               <button
                 key={link.id}
