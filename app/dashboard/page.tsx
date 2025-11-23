@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button"
 import { DomainCard } from "@/components/dashboard/domain/domain-card";
 import { getUserPlanType } from "@/actions/user";
 import { getPlanLimits } from "@/lib/plan-limits";
+import { getPlatformDomainUrl } from "@/lib/validators/domain";
 
 export default async function Page() {
   const businessData = await getBusinessData();
@@ -40,7 +41,7 @@ export default async function Page() {
         <h2 className="text-2xl font-bold tracking-tight">Dashboard</h2>
         <div className="flex gap-2">
            <Button asChild variant="outline" className="w-full sm:w-auto">
-            <Link href={`/preview/${businessData?.slug}`} target="_blank">
+            <Link href={businessData?.slug ? getPlatformDomainUrl(businessData.slug) : "#"} target="_blank">
                 <ExternalLink className="mr-2 h-4 w-4" />
                 Public Preview
             </Link>

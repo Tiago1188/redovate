@@ -42,6 +42,11 @@ export function normalizeDomain(input: string): string {
 export function getPlatformDomainUrl(subdomain: string) {
   const cleaned = normalizeSubdomain(subdomain);
   const value = cleaned.length > 0 ? cleaned : subdomain;
+  
+  if (process.env.NODE_ENV === "development") {
+    return `http://${value}.localhost:3000`;
+  }
+  
   return `https://${value}.${PLATFORM_SUBDOMAIN_SUFFIX}`;
 }
 

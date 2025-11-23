@@ -1,39 +1,88 @@
 import { notFound } from "next/navigation";
+import { getBusinessBySlug } from "@/actions/business/getBusinessBySlug";
+import { getBusinessActiveTemplate } from "@/actions/templates/getBusinessActiveTemplate";
+import RenderTemplate from "@/components/template-renderer/RenderTemplate";
 
-// Placeholder for database fetch
-async function getWebsiteBySlug(slug: string) {
-  // Simulate DB call
-  // In real implementation, fetch from database using slug
-  // const website = await db.query(...)
+export default async function SitePage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
   
-  console.log(`Fetching website for slug: ${slug}`);
-  
-  // Simulate 404 for specific slug for testing
-  if (slug === "missing") return null;
-
-  return {
-    slug,
-    name: `${slug.charAt(0).toUpperCase() + slug.slice(1)}'s Website`,
-    content: "Welcome to this generated website.",
-  };
-}
-
-export default async function SitePage({ params }: { params: { slug: string } }) {
-  const { slug } = params;
-  const website = await getWebsiteBySlug(slug);
-
-  if (!website) {
+  // 1. Fetch the business by slug
+  const business = await getBusinessBySlug(slug);
+  if (!business) {
     notFound();
   }
 
+  // 2. Fetch the active template for the business
+  const activeTemplate = await getBusinessActiveTemplate(business.id);
+
+  // If no active template, show 404 (or could be a "Coming Soon" placeholder)
+  if (!activeTemplate) {
+    console.log(`No active template found for business: ${slug}`);
+    notFound(); 
+  }
+
+  // 3. Prepare data for the template renderer
+  // Merge global business data into section-specific data
+  // This ensures sections have access to core business info even if not explicitly saved in siteContent
+  const templateData = {
+    ...business.siteContent,
+    HeroSection: {
+      ...business.siteContent?.HeroSection,
+      business_name: business.businessName,
+      tagline: business.tagline,
+      hero_image: business.heroImage,
+    },
+    AboutSection: {
+      ...business.siteContent?.AboutSection,
+      business_name: business.businessName,
+      about: business.about,
+      hero_image: business.heroImage,
+    },
+    ServicesSection: {
+      ...business.siteContent?.ServicesSection,
+      services: business.services,
+    },
+    ContactSection: {
+      ...business.siteContent?.ContactSection,
+      business_name: business.businessName,
+      email: business.email,
+      phone: business.phone,
+      social_links: business.socialLinks,
+      locations: business.locations,
+      hours: business.hours,
+    },
+    FooterSection: {
+      ...business.siteContent?.FooterSection,
+      business_name: business.businessName,
+      email: business.email,
+      phone: business.phone,
+      social_links: business.socialLinks,
+      locations: business.locations,
+    },
+    // Add global fallback for any section looking for common data
+    global: {
+      business_name: business.businessName,
+      email: business.email,
+      phone: business.phone,
+      logo: business.logo,
+      social_links: business.socialLinks,
+    }
+  };
+
+  // 4. Extract theme customizations
+  const customTheme = business.theme?.theme;
+  const customFont = business.theme?.font;
+  const customColors = business.theme?.colors;
+
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-8 font-sans">
-      <h1 className="text-4xl font-bold mb-4">{website.name}</h1>
-      <p className="text-xl text-gray-600">{website.content}</p>
-      <div className="mt-8 p-4 bg-gray-100 rounded-lg dark:bg-gray-800">
-        <p className="font-mono text-sm">Loaded from slug: {slug}</p>
-      </div>
-    </div>
+    <RenderTemplate
+      components={activeTemplate.components}
+      data={templateData}
+      templateSlug={activeTemplate.slug}
+      customTheme={customTheme}
+      customFont={customFont}
+      customColors={customColors}
+      showBranding={true} // Can be conditional based on plan
+    />
   );
 }
-

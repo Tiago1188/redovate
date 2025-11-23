@@ -1,3 +1,5 @@
+"use client";
+
 // Helper to inject theme CSS variables
 const ThemeStyles = ({ theme }: { theme: any }) => {
   if (!theme) return null;
