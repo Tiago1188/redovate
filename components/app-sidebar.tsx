@@ -16,6 +16,7 @@ import {
   IconUsers,
   IconPalette,
   IconBriefcase,
+  IconWorld,
 } from "@tabler/icons-react"
 
 import { NavMain } from "@/components/nav-main"
@@ -48,6 +49,11 @@ const data = {
       title: "Services",
       url: "/dashboard/services",
       icon: IconBriefcase,
+    },
+    {
+      title: "Domains",
+      url: "/dashboard/domain",
+      icon: IconWorld,
     },
     {
       title: "Lifecycle",

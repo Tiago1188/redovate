@@ -4,53 +4,12 @@ import { auth } from "@clerk/nextjs/server";
 import { generateObject } from "ai";
 import { openai } from "@ai-sdk/openai";
 import { z } from "zod";
-import pool from "@/lib/db";
 import { getBusinessData } from "@/actions/business";
-import { getUserPlanType } from "@/actions/user";
-import { getPlanLimits } from "@/lib/plan-limits";
+import { checkAiUsageLimit, incrementAiUsage } from "@/actions/ai/usage";
 
 const ServiceDescriptionSchema = z.object({
   description: z.string().describe("A professional description of the service (1-2 sentences)."),
 });
-
-async function checkAiUsageLimit(businessId: string, userId: string) {
-    const [userPlan, businessData] = await Promise.all([
-        getUserPlanType(userId),
-        getBusinessData()
-    ]);
-
-    if (!businessData) throw new Error("Business data not found");
-
-    const plan = userPlan || 'free';
-    const limits = getPlanLimits(plan);
-
-    const now = new Date();
-    const periodStart = new Date(businessData.aiPeriodStart);
-    const oneMonthAgo = new Date(now);
-    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-
-    let currentUsage = businessData.aiGenerationsCount;
-
-    // Reset if period is older than 1 month
-    if (periodStart < oneMonthAgo) {
-        currentUsage = 0;
-        await pool.query(
-            `UPDATE businesses SET ai_generations_count = 0, ai_period_start = now() WHERE id = $1`,
-            [businessId]
-        );
-    }
-
-    if (currentUsage >= limits.maxAiGenerations) {
-        throw new Error(`AI generation limit reached for your ${plan} plan. Upgrade to generate more content.`);
-    }
-}
-
-async function incrementAiUsage(businessId: string) {
-    await pool.query(
-        `UPDATE businesses SET ai_generations_count = ai_generations_count + 1 WHERE id = $1`,
-        [businessId]
-    );
-}
 
 export async function generateServiceDescription(serviceName: string) {
   const { userId } = await auth();
@@ -60,7 +19,12 @@ export async function generateServiceDescription(serviceName: string) {
   if (!business) throw new Error("Business not found");
 
   // Check usage before generating
-  await checkAiUsageLimit(business.id, userId);
+  await checkAiUsageLimit({
+    businessId: business.id,
+    userId,
+    currentUsage: business.aiGenerationsCount,
+    aiPeriodStart: business.aiPeriodStart,
+  });
 
   try {
     const { object } = await generateObject({
@@ -101,7 +65,12 @@ export async function generateSuggestedServices(count: number = 3) {
   if (!business) throw new Error("Business not found");
 
   // Check usage before generating
-  await checkAiUsageLimit(business.id, userId);
+  await checkAiUsageLimit({
+    businessId: business.id,
+    userId,
+    currentUsage: business.aiGenerationsCount,
+    aiPeriodStart: business.aiPeriodStart,
+  });
 
   try {
     const { object } = await generateObject({

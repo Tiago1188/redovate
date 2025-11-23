@@ -24,6 +24,13 @@ export interface BusinessData {
     siteContent?: any; // Added site content field
     aiGenerationsCount: number;
     aiPeriodStart: Date;
+    domain: string | null;
+    dnsVerificationToken: string | null;
+    verified: boolean;
+    verifiedDate: Date | null;
+    verifiedMethod: string | null;
+    websiteUrl: string | null;
+    updatedAt: Date | null;
 }
 
 /**
@@ -58,7 +65,14 @@ export async function getBusinessData(): Promise<BusinessData | null> {
                 b.theme,
                 b.site_content,
                 b.ai_generations_count,
-                b.ai_period_start
+                b.ai_period_start,
+                b.domain,
+                b.dns_verification_token,
+                b.verified,
+                b.verified_date,
+                b.verified_method,
+                b.website_url,
+                b.updated_at
              FROM users u
              INNER JOIN businesses b ON b.user_id = u.id
              WHERE u.clerk_id = $1
@@ -92,6 +106,13 @@ export async function getBusinessData(): Promise<BusinessData | null> {
             siteContent: row.site_content || {},
             aiGenerationsCount: row.ai_generations_count || 0,
             aiPeriodStart: row.ai_period_start || new Date(),
+            domain: row.domain || null,
+            dnsVerificationToken: row.dns_verification_token || null,
+            verified: Boolean(row.verified),
+            verifiedDate: row.verified_date || null,
+            verifiedMethod: row.verified_method || null,
+            websiteUrl: row.website_url || null,
+            updatedAt: row.updated_at || null,
         };
     } catch (error) {
         console.error('Error fetching business data:', error);

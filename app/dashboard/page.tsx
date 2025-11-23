@@ -8,9 +8,14 @@ import { getBusinessData } from "@/actions/business"
 import { getActiveTemplate } from "@/actions/templates"
 import { EmptyState } from "@/components/empty-state"
 import { Button } from "@/components/ui/button"
+import { DomainCard } from "@/components/dashboard/domain/domain-card";
+import { getUserPlanType } from "@/actions/user";
+import { getPlanLimits } from "@/lib/plan-limits";
 
 export default async function Page() {
   const businessData = await getBusinessData();
+  const planType = (await getUserPlanType()) || 'free';
+  const limits = getPlanLimits(planType);
   
   // Check if user has an active template - if not, redirect to template selection
   const hasTemplate = await hasActiveTemplate();
@@ -50,6 +55,14 @@ export default async function Page() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {businessData && (
+          <DomainCard
+            slug={businessData.slug}
+            domain={businessData.domain}
+            verified={businessData.verified}
+            canUseCustomDomain={limits.customDomain}
+          />
+        )}
         {sections.map((section) => {
           const href = section.name === 'ServicesSection' 
             ? '/dashboard/services' 
