@@ -86,6 +86,7 @@ CREATE TABLE IF NOT EXISTS businesses(
     products JSONB DEFAULT '[]',
     images JSONB DEFAULT '[]',
     site_content JSONB DEFAULT '{}'::jsonb,
+    services_raw JSONB DEFAULT '[]',
 
     logo TEXT,
     hero_image TEXT,

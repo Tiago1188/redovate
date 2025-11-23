@@ -1,5 +1,14 @@
 import { z } from "zod";
 
+export const CleanedServicesSchema = z.object({
+    cleaned_services: z.array(z.object({
+        title: z.string().describe("Service Title"),
+        description: z.string().describe("1–2 sentence description"),
+    })),
+});
+
+export type CleanedServices = z.infer<typeof CleanedServicesSchema>;
+
 export const SiteContentSchema = z.object({
     HeroSection: z.object({
         headline: z.string().describe("Main catchy headline for the hero section"),
@@ -66,4 +75,3 @@ export const SiteContentSchema = z.object({
 });
 
 export type SiteContent = z.infer<typeof SiteContentSchema>;
-

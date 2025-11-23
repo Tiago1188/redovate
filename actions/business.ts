@@ -14,7 +14,8 @@ export interface BusinessData {
     email: string | null;
     heroImage: string | null;
     logo: string | null;
-    services: string[];
+    services: any[];
+    servicesRaw: string[];
     locations: any[];
     serviceAreas: string[];
     hours: any;
@@ -47,6 +48,7 @@ export async function getBusinessData(): Promise<BusinessData | null> {
                 b.hero_image,
                 b.logo,
                 b.services,
+                b.services_raw,
                 b.locations,
                 b.service_areas,
                 b.hours,
@@ -77,6 +79,7 @@ export async function getBusinessData(): Promise<BusinessData | null> {
             heroImage: row.hero_image,
             logo: row.logo,
             services: Array.isArray(row.services) ? row.services : [],
+            servicesRaw: Array.isArray(row.services_raw) ? row.services_raw : [],
             locations: Array.isArray(row.locations) ? row.locations : [],
             serviceAreas: Array.isArray(row.service_areas) ? row.service_areas : [],
             hours: row.hours || {},

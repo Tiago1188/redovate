@@ -7,11 +7,7 @@ import pool from "@/lib/db";
 import { getBusinessData } from "@/actions/business";
 import { getActiveTemplate } from "@/actions/templates";
 import { getUserPlanType } from "@/actions/user";
-import { SiteContentSchema } from "@/validations/ai-content";
-
-// Define the schema for the generated content
-// This covers all possible sections across different templates
-// Moved to @/validations/ai-content
+import { SiteContentSchema, CleanedServicesSchema } from "@/validations/ai-content";
 
 export async function generateSiteContent() {
     const { userId } = await auth();
@@ -32,6 +28,71 @@ export async function generateSiteContent() {
     const plan = userPlan || 'free';
     const isStarterOrHigher = plan !== 'free';
 
+    // ===================================================
+    // STEP 1: CLEAN SERVICES
+    // ===================================================
+    
+    // Determine limits
+    const minServices = isStarterOrHigher ? 5 : 3;
+    const maxServices = isStarterOrHigher ? 15 : 5;
+
+    const servicesRaw = businessData.servicesRaw && businessData.servicesRaw.length > 0 
+        ? businessData.servicesRaw 
+        : businessData.services;
+
+    // Helper to get array from maybe array
+    const servicesList = Array.isArray(servicesRaw) ? servicesRaw : [];
+
+    const cleanServicesPrompt = `You are an expert copywriter.
+    
+    Task: Clean and Structure the following list of services provided by a user.
+    User Services: ${JSON.stringify(servicesList)}
+    
+    Instructions:
+    - Fix typos.
+    - Improve clarity.
+    - Remove duplicates.
+    - Expand vague terms (e.g. "fix pipes" -> "Pipe Repair & Maintenance").
+    - Generate structured output: { title, description }.
+    - Title: concise service name.
+    - Description: 1-2 sentences describing the service benefits.
+    - TARGET COUNT: Minimum ${minServices}, Maximum ${maxServices}.
+    - If user provided too few, EXPAND logically based on the business category (${businessData.category}).
+    - If user provided too many, MERGE or SELECT the best ones.
+    `;
+
+    let cleanedServices: { title: string; description: string }[] = [];
+
+    try {
+        const { object } = await generateObject({
+            model: openai("gpt-5-mini"),
+            schema: CleanedServicesSchema,
+            system: cleanServicesPrompt,
+            prompt: "Clean the services list.",
+        });
+        cleanedServices = object.cleaned_services;
+
+        // SAVE CLEANED SERVICES TO DB
+        await pool.query(
+            `UPDATE businesses 
+             SET services = $1, updated_at = now() 
+             WHERE id = $2`,
+            [JSON.stringify(cleanedServices), businessData.id]
+        );
+
+    } catch (error) {
+        console.error("Service Cleaning Error:", error);
+        // Fallback: use raw services structured minimally if AI fails
+        cleanedServices = servicesList.map(s => ({
+            title: String(s),
+            description: "Professional service offered."
+        })).slice(0, maxServices);
+    }
+
+    // ===================================================
+    // STEP 2: GENERATE SITE CONTENT
+    // ===================================================
+
     // 2. Prepare the system prompt based on plan
     const components = Array.isArray(activeTemplate.components) 
         ? activeTemplate.components 
@@ -43,13 +104,22 @@ export async function generateSiteContent() {
         ? businessData.locations.map((l: any) => l.location).join(", ")
         : 'Local Area';
 
+    const serviceAreas = businessData.serviceAreas && businessData.serviceAreas.length > 0
+        ? businessData.serviceAreas.join(", ")
+        : locations; // Fallback to location if no service areas defined
+
+    // Format services for the prompt
+    const formattedServices = cleanedServices.map(s => `${s.title}: ${s.description}`).join("\n");
+
     let systemPrompt = `You are an expert copywriter and SEO specialist generating content for a local business website.
     
     Business Details:
     - Name: ${businessData.businessName}
     - Type: ${businessData.category || 'General Business'}
-    - Services: ${businessData.services.join(", ")}
-    - Locations: ${locations}
+    - Services: 
+${formattedServices}
+    - Business Location (Physical Address): ${locations}
+    - Service Areas (Coverage): ${serviceAreas}
     - About (User Input): ${businessData.about || ''}
     
     Instructions:
@@ -57,11 +127,13 @@ export async function generateSiteContent() {
     - Do NOT generate content for components not listed.
     - Ensure the tone is professional yet approachable.
     - Map fields precisely to the schema provided.
+    
+    IMPORTANT: USE THE CLEANED SERVICES LIST PROVIDED ABOVE. Do not invent completely new services unless required to meet length requirements.
 
     KEYWORD STRATEGY:
     - Generate SEO keywords based on REAL user search intent.
     - Include combinations of:
-      1. [Service] + [Location] (e.g., "Carpenter in Sydney")
+      1. [Service] + [Service Area] (e.g., "Carpenter in Sydney")
       2. [Service] + "near me"
       3. [Business Name]
       4. "Best" + [Service] + [Location]
@@ -72,8 +144,8 @@ export async function generateSiteContent() {
         PLAN: STARTER/BUSINESS (PREMIUM)
         - Generate comprehensive, detailed descriptions.
         - Tagline: Short and punchy. Optional sub-tagline recommended.
-        - Services: Generate between 5 to 15 services. Write rich, benefit-oriented descriptions (2-3 sentences each).
-        - Service Areas: Use the provided business locations. If the component requires content, populate it with the provided locations. Do NOT invent new locations unless necessary for layout.
+        - Services: You have the list of ${cleanedServices.length} services. Use their titles and descriptions. Ensure rich, benefit-oriented text.
+        - Service Areas: Use the provided Service Areas (Coverage) list. If the component requires content, populate it with these areas. Do NOT invent new locations unless necessary for layout.
         - About: Create a compelling, detailed "About Us" story (300-500 characters) expanding on the user's input.
         - Keywords: Provide 10-15 high-value SEO keywords using the strategy above.
         - Testimonials: Create 3-4 distinct, detailed testimonials (if requested).
@@ -86,11 +158,11 @@ export async function generateSiteContent() {
         systemPrompt += `
         PLAN: FREE
         - STRICTLY LIMIT content to the following requirements:
-        - Services: Generate 3 to 5 services. Descriptions must be 1-2 sentences max.
+        - Services: You have the list of ${cleanedServices.length} services. Use them.
         - Keywords: Provide 3 to 5 SEO keywords using the strategy above.
         - About: Keep the "About Us" text short (2-3 sentences).
         - Tagline: Short and punchy (8-12 words max).
-        - Location: Focus on exactly one primary location.
+        - Location: Focus on the primary Business Location.
         - NO Certifications.
         - NO FAQ generation.
         - NO Social links.
@@ -109,12 +181,6 @@ export async function generateSiteContent() {
         });
 
         // 4. Save to Database
-        // Merge with existing content if any, or overwrite? Overwrite is usually better for regeneration.
-        // But we might want to keep manual edits? For now, the plan implies generation (overwrite).
-        
-        // We also need to ensure we don't lose data that wasn't generated if we merge.
-        // However, this is "generating" state, so we likely just set the initial content.
-        
         await pool.query(
             `UPDATE businesses 
              SET site_content = $1, updated_at = now() 
@@ -128,4 +194,3 @@ export async function generateSiteContent() {
         throw new Error("Failed to generate content");
     }
 }
-

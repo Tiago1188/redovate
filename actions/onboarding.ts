@@ -151,7 +151,8 @@ export async function completeOnboarding(formData: FormData) {
                      about = $4,
                      category = $5,
                      year_founded = $6,
-                     services = $7,
+                     services = '[]'::jsonb,
+                     services_raw = $7,
                      locations = $8,
                      service_areas = $9,
                      theme = $10,
@@ -183,11 +184,12 @@ export async function completeOnboarding(formData: FormData) {
                     category,
                     year_founded,
                     services,
+                    services_raw,
                     locations,
                     service_areas,
                     theme
                 )
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, '[]'::jsonb, $8, $9, $10, $11)
                 RETURNING id`,
                 [
                     internalUserId,
