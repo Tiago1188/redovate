@@ -20,7 +20,7 @@ interface DeleteDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   service: Service | null;
-  onSuccess: () => void;
+  onSuccess?: (serviceId: string) => void;
 }
 
 export function DeleteDialog({ open, onOpenChange, service, onSuccess }: DeleteDialogProps) {
@@ -33,7 +33,7 @@ export function DeleteDialog({ open, onOpenChange, service, onSuccess }: DeleteD
     try {
       await deleteService(service.id);
       toast.success("Service deleted successfully");
-      onSuccess();
+      onSuccess?.(service.id);
       onOpenChange(false);
     } catch (error) {
       if (error instanceof Error) {

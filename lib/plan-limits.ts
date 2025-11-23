@@ -16,6 +16,7 @@ export interface PlanLimits {
     customThemes: boolean;
     analyticsIntegration: boolean;
     socialMediaIntegration: boolean;
+    maxAiGenerations: number;
 }
 
 export const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
@@ -30,18 +31,20 @@ export const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
         customThemes: false,
         analyticsIntegration: false,
         socialMediaIntegration: false,
+        maxAiGenerations: 10,
     },
     starter: {
         maxServices: 15,
-        maxServiceAreas: 5, // Unlimited for practical purposes
+        maxServiceAreas: 5,
         maxKeywords: 15,
-        maxImages: 15,// Unlimited for practical purposes
-        maxLocations:1,// Unlimited for practical purposes
+        maxImages: 15,
+        maxLocations: 1,
         customDomain: true,
         removeBranding: true,
         customThemes: true,
         analyticsIntegration: true,
         socialMediaIntegration: true,
+        maxAiGenerations: 75,
     },
     business: {
         maxServices: 999, // Unlimited
@@ -54,6 +57,7 @@ export const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
         customThemes: true,
         analyticsIntegration: true,
         socialMediaIntegration: true,
+        maxAiGenerations: 999, // Unlimited
     },
 };
 

@@ -8,6 +8,7 @@ import { getBusinessData } from "@/actions/business";
 import { getActiveTemplate } from "@/actions/templates";
 import { getUserPlanType } from "@/actions/user";
 import { SiteContentSchema, CleanedServicesSchema } from "@/validations/ai-content";
+import { getPlanLimits } from "@/lib/plan-limits";
 
 export async function generateSiteContent() {
     const { userId } = await auth();
@@ -27,6 +28,31 @@ export async function generateSiteContent() {
 
     const plan = userPlan || 'free';
     const isStarterOrHigher = plan !== 'free';
+    const limits = getPlanLimits(plan);
+
+    // ===================================================
+    // CHECK AI USAGE LIMITS
+    // ===================================================
+    const now = new Date();
+    const periodStart = new Date(businessData.aiPeriodStart);
+    const oneMonthAgo = new Date(now);
+    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+
+    let currentUsage = businessData.aiGenerationsCount;
+
+    // Reset if period is older than 1 month
+    if (periodStart < oneMonthAgo) {
+        currentUsage = 0;
+        // Update start date in DB
+        await pool.query(
+            `UPDATE businesses SET ai_generations_count = 0, ai_period_start = now() WHERE id = $1`,
+            [businessData.id]
+        );
+    }
+
+    if (currentUsage >= limits.maxAiGenerations) {
+        throw new Error(`AI generation limit reached for your ${plan} plan. Upgrade to generate more content.`);
+    }
 
     // ===================================================
     // STEP 1: CLEAN SERVICES
@@ -180,10 +206,12 @@ ${formattedServices}
             prompt: "Generate the website content based on the business details and plan limits.",
         });
 
-        // 4. Save to Database
+        // 4. Save to Database and increment usage
         await pool.query(
             `UPDATE businesses 
-             SET site_content = $1, updated_at = now() 
+             SET site_content = $1, 
+                 ai_generations_count = ai_generations_count + 1,
+                 updated_at = now() 
              WHERE id = $2`,
             [JSON.stringify(object), businessData.id]
         );

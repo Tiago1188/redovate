@@ -21,6 +21,7 @@ import {
 import { NavMain } from "@/components/nav-main"
 import { NavSecondary } from "@/components/nav-secondary"
 import { NavUser } from "@/components/nav-user"
+import { NavUsage } from "@/components/nav-usage"
 import {
   Sidebar,
   SidebarContent,
@@ -79,6 +80,7 @@ const data = {
         {
           title: "Active Proposals",
           url: "#",
+          style: "text" // added specific style prop
         },
         {
           title: "Archived",
@@ -136,7 +138,11 @@ const data = {
   ],
 }
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
+  // removed usage props
+}
+
+export function AppSidebar({ ...props }: AppSidebarProps) {
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
@@ -144,10 +150,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             <SidebarMenuButton
               asChild
-              className="data-[slot=sidebar-menu-button]:!p-1.5"
+              className="data-[slot=sidebar-menu-button]:p-1.5!"
             >
               <a href="#">
-                <IconInnerShadowTop className="!size-5" />
+                <IconInnerShadowTop className="size-5!" />
                 <span className="text-base font-semibold">Acme Inc.</span>
               </a>
             </SidebarMenuButton>
@@ -159,6 +165,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
+        <NavUsage />
         <NavUser />
       </SidebarFooter>
     </Sidebar>

@@ -1,9 +1,11 @@
 'use client';
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { type Service, addService } from "@/actions/services";
 import { generateSuggestedServices } from "@/actions/ai/services";
+import { useAIUsageStore } from "@/stores/use-ai-usage-store";
 import { ServicesHeader } from "./services-header";
 import { ServicesTable } from "./services-table";
 import { ServiceDialog } from "./service-dialog";
@@ -15,10 +17,12 @@ interface ServicesClientProps {
 }
 
 export function ServicesClient({ initialServices, maxServices }: ServicesClientProps) {
-  const [services] = useState<Service[]>(initialServices);
+  const router = useRouter();
+  const [services, setServices] = useState<Service[]>(initialServices);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isGenerateDialogOpen, setIsGenerateDialogOpen] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const incrementUsage = useAIUsageStore((state) => state.incrementUsage);
 
   const handleAddManual = () => {
     setIsAddDialogOpen(true);
@@ -43,10 +47,14 @@ export function ServicesClient({ initialServices, maxServices }: ServicesClientP
 
       // Add services sequentially
       let addedCount = 0;
+      const newlyAdded: Service[] = [];
       for (const service of result.services) {
         try {
-          await addService(service);
-          addedCount++;
+          const response = await addService(service);
+          if (response?.success && response.service) {
+            newlyAdded.push(response.service);
+            addedCount++;
+          }
         } catch (err) {
           console.error("Failed to add generated service", err);
         }
@@ -54,7 +62,14 @@ export function ServicesClient({ initialServices, maxServices }: ServicesClientP
 
       if (addedCount > 0) {
         toast.success(`Successfully generated ${addedCount} services!`);
-        window.location.reload(); // Refresh to show new services
+        // Update local usage state immediately
+        for (let i = 0; i < addedCount; i++) {
+          incrementUsage();
+        }
+        setServices((prev) => [...prev, ...newlyAdded]);
+        setIsGenerateDialogOpen(false);
+        // Refresh server data in background without a full reload
+        router.refresh();
       } else {
         toast.warning("No services were added. You might have reached your limit.");
       }
@@ -68,8 +83,19 @@ export function ServicesClient({ initialServices, maxServices }: ServicesClientP
     }
   };
 
-  const refresh = () => {
-    window.location.reload();
+  const handleServiceCreated = (service: Service) => {
+    setServices((prev) => [...prev, service]);
+    router.refresh();
+  };
+
+  const handleServiceUpdated = (service: Service) => {
+    setServices((prev) => prev.map((item) => (item.id === service.id ? service : item)));
+    router.refresh();
+  };
+
+  const handleServiceDeleted = (serviceId: string) => {
+    setServices((prev) => prev.filter((item) => item.id !== serviceId));
+    router.refresh();
   };
 
   const remainingSlots = maxServices >= 999 ? 999 : maxServices - services.length;
@@ -77,19 +103,25 @@ export function ServicesClient({ initialServices, maxServices }: ServicesClientP
   return (
     <div className="space-y-6 p-6">
       <ServicesHeader
-        currentCount={initialServices.length}
+        currentCount={services.length}
         maxCount={maxServices}
         onAdd={handleAddManual}
         onGenerate={handleOpenGenerate}
         isGenerating={isGenerating}
       />
       
-      <ServicesTable initialServices={initialServices} />
+      <ServicesTable
+        services={services}
+        onServiceUpdated={handleServiceUpdated}
+        onServiceDeleted={handleServiceDeleted}
+      />
 
       <ServiceDialog
         open={isAddDialogOpen}
         onOpenChange={setIsAddDialogOpen}
-        onSuccess={refresh}
+        onSuccess={({ service }) => {
+          handleServiceCreated(service);
+        }}
       />
 
       <GenerateDialog

@@ -28,6 +28,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { generateServiceDescription } from "@/actions/ai/services";
 import { addService, updateService, type Service } from "@/actions/services";
+import { useAIUsageStore } from "@/stores/use-ai-usage-store";
 
 const formSchema = z.object({
   title: z.string().min(1, "Service name is required"),
@@ -39,12 +40,13 @@ interface ServiceDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   service?: Service | null;
-  onSuccess: () => void;
+  onSuccess?: (payload: { service: Service; type: 'create' | 'update' }) => void;
 }
 
 export function ServiceDialog({ open, onOpenChange, service, onSuccess }: ServiceDialogProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const incrementUsage = useAIUsageStore((state) => state.incrementUsage);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -84,6 +86,8 @@ export function ServiceDialog({ open, onOpenChange, service, onSuccess }: Servic
       if (result.success && result.description) {
         form.setValue("description", result.description, { shouldDirty: true });
         toast.success("Description generated!");
+        incrementUsage();
+        incrementUsage();
       } else {
         toast.error(result.error || "Failed to generate description");
       }
@@ -98,13 +102,18 @@ export function ServiceDialog({ open, onOpenChange, service, onSuccess }: Servic
     setIsSubmitting(true);
     try {
       if (service) {
-        await updateService(service.id, values);
-        toast.success("Service updated successfully");
+        const result = await updateService(service.id, values);
+        if (result?.success && result.service) {
+          toast.success("Service updated successfully");
+          onSuccess?.({ service: result.service, type: "update" });
+        }
       } else {
-        await addService(values);
-        toast.success("Service added successfully");
+        const result = await addService(values);
+        if (result?.success && result.service) {
+          toast.success("Service added successfully");
+          onSuccess?.({ service: result.service, type: "create" });
+        }
       }
-      onSuccess();
       onOpenChange(false);
     } catch (error) {
       if (error instanceof Error) {

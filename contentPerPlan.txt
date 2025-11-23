@@ -13,6 +13,7 @@ Short service descriptions (1–2 sentences each)
 Location (only 1)
 Short About section (2–3 sentences)
 SEO Keywords (minimum 3, maximum 5)
+10 AI generations monthly
 
 Free plan restrictions
 
@@ -41,6 +42,7 @@ Service descriptions (2–3 sentences each)
 Locations / Service Areas (at least 3, max 5)
 About section (300–500 characters, more detailed than free plan)
 SEO Keywords (min5 – max 15 keywords)
+75 AI generations monthly
 
 Footer information
 

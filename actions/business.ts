@@ -22,6 +22,8 @@ export interface BusinessData {
     socialLinks: any;
     theme?: any;
     siteContent?: any; // Added site content field
+    aiGenerationsCount: number;
+    aiPeriodStart: Date;
 }
 
 /**
@@ -54,7 +56,9 @@ export async function getBusinessData(): Promise<BusinessData | null> {
                 b.hours,
                 b.social_links,
                 b.theme,
-                b.site_content
+                b.site_content,
+                b.ai_generations_count,
+                b.ai_period_start
              FROM users u
              INNER JOIN businesses b ON b.user_id = u.id
              WHERE u.clerk_id = $1
@@ -86,9 +90,12 @@ export async function getBusinessData(): Promise<BusinessData | null> {
             socialLinks: row.social_links || {},
             theme: row.theme || {},
             siteContent: row.site_content || {},
+            aiGenerationsCount: row.ai_generations_count || 0,
+            aiPeriodStart: row.ai_period_start || new Date(),
         };
     } catch (error) {
         console.error('Error fetching business data:', error);
         return null;
     }
 }
+

@@ -24,7 +24,9 @@ export async function getBusinessBySlug(slug: string): Promise<BusinessData | nu
           b.hours,
           b.social_links,
           b.theme,
-          b.site_content
+          b.site_content,
+          b.ai_generations_count,
+          b.ai_period_start
        FROM businesses b
        WHERE b.slug = $1
        LIMIT 1`,
@@ -55,6 +57,8 @@ export async function getBusinessBySlug(slug: string): Promise<BusinessData | nu
       socialLinks: row.social_links || {},
       theme: row.theme || {},
       siteContent: row.site_content || {},
+      aiGenerationsCount: row.ai_generations_count || 0,
+      aiPeriodStart: row.ai_period_start || new Date(),
     };
   } catch (error) {
     console.error('Error fetching business by slug:', error);

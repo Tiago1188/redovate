@@ -6,6 +6,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { Sparkles } from "lucide-react";
 import { generateSiteContent } from "@/actions/ai/generate";
 import { toast } from "sonner";
+import { useAIUsageStore } from "@/stores/use-ai-usage-store";
 
 const loadingMessages = [
   "Analyzing your business information…",
@@ -20,6 +21,7 @@ export default function GeneratingPage() {
   const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
   const [isVisible, setIsVisible] = useState(true);
   const hasStartedGeneration = useRef(false);
+  const incrementUsage = useAIUsageStore((state) => state.incrementUsage);
 
   // Cycle through messages every 2.5 seconds
   useEffect(() => {
@@ -48,6 +50,7 @@ export default function GeneratingPage() {
       try {
         await generateSiteContent();
         // Add a small delay to ensure the last message is seen or just transition smoothly
+        incrementUsage();
         router.push("/dashboard");
       } catch (error) {
         console.error("Generation failed:", error);

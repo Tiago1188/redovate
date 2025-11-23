@@ -17,11 +17,16 @@ import {
 } from "@/components/ui/table";
 
 interface ServicesTableProps {
-  initialServices: Service[];
+  services: Service[];
+  onServiceUpdated: (service: Service) => void;
+  onServiceDeleted: (serviceId: string) => void;
 }
 
-export function ServicesTable({ initialServices }: ServicesTableProps) {
-  const [services, setServices] = useState<Service[]>(initialServices);
+export function ServicesTable({
+  services,
+  onServiceUpdated,
+  onServiceDeleted,
+}: ServicesTableProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   
@@ -55,16 +60,6 @@ export function ServicesTable({ initialServices }: ServicesTableProps) {
   const handleDelete = (service: Service) => {
     setDeletingService(service);
     setIsDeleteDialogOpen(true);
-  };
-
-  const refreshServices = () => {
-     // In a real app with server components + client interaction, 
-     // we might router.refresh() here, but for optimistic updates or just passing state back,
-     // we rely on the parent or page reload. 
-     // However, since we passed initialServices, we should probably accept an updated list or 
-     // rely on Next.js Server Actions revalidation which will update the page props on refresh.
-     // For this component, we'll trust the server action revalidation to update the page content.
-     window.location.reload();
   };
 
   return (
@@ -140,16 +135,32 @@ export function ServicesTable({ initialServices }: ServicesTableProps) {
 
       <ServiceDialog
         open={isEditDialogOpen}
-        onOpenChange={setIsEditDialogOpen}
+        onOpenChange={(open) => {
+          setIsEditDialogOpen(open);
+          if (!open) {
+            setEditingService(null);
+          }
+        }}
         service={editingService}
-        onSuccess={refreshServices}
+        onSuccess={({ service }) => {
+          onServiceUpdated(service);
+          setEditingService(service);
+        }}
       />
 
       <DeleteDialog
         open={isDeleteDialogOpen}
-        onOpenChange={setIsDeleteDialogOpen}
+        onOpenChange={(open) => {
+          setIsDeleteDialogOpen(open);
+          if (!open) {
+            setDeletingService(null);
+          }
+        }}
         service={deletingService}
-        onSuccess={refreshServices}
+        onSuccess={(serviceId) => {
+          onServiceDeleted(serviceId);
+          setDeletingService(null);
+        }}
       />
     </div>
   );

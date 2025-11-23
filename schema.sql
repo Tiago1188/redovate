@@ -114,6 +114,10 @@ CREATE TABLE IF NOT EXISTS businesses(
     plan_expiry_date DATE,
     status business_status_enum DEFAULT 'active',
 
+    -- AI Usage Tracking
+    ai_generations_count INT DEFAULT 0,
+    ai_period_start TIMESTAMP DEFAULT now(),
+
     created_at TIMESTAMP DEFAULT now(),
     updated_at TIMESTAMP DEFAULT now()
 );
