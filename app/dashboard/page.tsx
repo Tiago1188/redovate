@@ -50,17 +50,23 @@ export default async function Page() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {sections.map((section) => (
-          <SectionCard
-            key={section.name}
-            title={section.label || section.name}
-            status={section.status}
-            completion={section.completion_percent}
-            completedItems={section.completed_items}
-            totalItems={section.total_items}
-            href={`/dashboard/sections/${section.name}`}
-          />
-        ))}
+        {sections.map((section) => {
+          const href = section.name === 'ServicesSection' 
+            ? '/dashboard/services' 
+            : `/dashboard/sections/${section.name}`;
+
+          return (
+            <SectionCard
+              key={section.name}
+              title={section.label || section.name}
+              status={section.status}
+              completion={section.completion_percent}
+              completedItems={section.completed_items}
+              totalItems={section.total_items}
+              href={href}
+            />
+          );
+        })}
       </div>
     </div>
   )
