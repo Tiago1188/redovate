@@ -106,6 +106,8 @@ export async function getStarterPlanCount(): Promise<number> {
 
 /**
  * Get the current user's plan type
+ * Resolves to the highest plan type found between 'users' and 'businesses' tables
+ * to handle potential data inconsistencies.
  */
 export async function getUserPlanType(userId?: string): Promise<'free' | 'starter' | 'business' | null> {
     const authResult = userId ? { userId } : await auth();
@@ -116,8 +118,13 @@ export async function getUserPlanType(userId?: string): Promise<'free' | 'starte
     }
 
     try {
+        // Check both tables for the plan type
         const result = await pool.query(
-            `SELECT plan_type FROM users WHERE clerk_id = $1 LIMIT 1`,
+            `SELECT u.plan_type as user_plan, b.plan_type as business_plan
+             FROM users u
+             LEFT JOIN businesses b ON b.user_id = u.id
+             WHERE u.clerk_id = $1
+             LIMIT 1`,
             [clerkUserId]
         );
 
@@ -125,8 +132,27 @@ export async function getUserPlanType(userId?: string): Promise<'free' | 'starte
             return null;
         }
 
-        const planType = result.rows[0].plan_type;
-        return planType as 'free' | 'starter' | 'business' | null;
+        const userPlan = result.rows[0].user_plan;
+        const businessPlan = result.rows[0].business_plan;
+
+        // Determine the highest plan
+        // Plan hierarchy: business > starter > free
+        
+        const planWeight = (p: string | null) => {
+            if (p === 'business') return 3;
+            if (p === 'starter') return 2;
+            if (p === 'free') return 1;
+            return 0;
+        };
+
+        const userWeight = planWeight(userPlan);
+        const businessWeight = planWeight(businessPlan);
+
+        if (businessWeight > userWeight) {
+            return businessPlan as 'free' | 'starter' | 'business';
+        }
+
+        return userPlan as 'free' | 'starter' | 'business' | null;
     } catch (error) {
         console.error('Error getting user plan type:', error);
         return null;
@@ -194,4 +220,3 @@ export async function getUserOnboardingStatus(userId?: string): Promise<Onboardi
         };
     }
 }
-
