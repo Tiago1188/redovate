@@ -1,37 +1,24 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse, type NextRequest } from "next/server";
 import { getUserOnboardingStatus, hasSelectedPlan } from "@/actions/user";
+import { getSubdomainFromHost } from "@/lib/utils";
 
 const PLATFORM_DOMAIN =
   process.env.NEXT_PUBLIC_PLATFORM_DOMAIN?.replace(/^https?:\/\//, "")?.replace(/\/.*$/, "") || "myredovate.com";
 
-const RESERVED_SUBDOMAINS = new Set(["www", "app"]);
-const LOCAL_HOSTS = new Set(["localhost", "localhost:3000", "127.0.0.1", "127.0.0.1:3000"]);
-
 function rewritePlatformSubdomain(req: NextRequest) {
   const hostname = req.headers.get("host") || "";
+  const subdomain = getSubdomainFromHost(hostname, PLATFORM_DOMAIN);
 
-  if (!hostname || LOCAL_HOSTS.has(hostname)) {
-    return null;
+  if (subdomain) {
+    // Rewrite all requests to /site/[slug]
+    // We preserve the search params but rewrite the path to the specific site page
+    const url = req.nextUrl.clone();
+    url.pathname = `/site/${subdomain}`;
+    return NextResponse.rewrite(url);
   }
 
-  if (hostname === PLATFORM_DOMAIN || hostname === `www.${PLATFORM_DOMAIN}`) {
-    return null;
-  }
-
-  if (!hostname.endsWith(`.${PLATFORM_DOMAIN}`)) {
-    return null;
-  }
-
-  const subdomain = hostname.replace(`.${PLATFORM_DOMAIN}`, "");
-
-  if (!subdomain || RESERVED_SUBDOMAINS.has(subdomain)) {
-    return null;
-  }
-
-  const url = req.nextUrl.clone();
-  url.pathname = `/preview/${subdomain}`;
-  return NextResponse.rewrite(url);
+  return null;
 }
 
 const isPublicRoute = createRouteMatcher([
