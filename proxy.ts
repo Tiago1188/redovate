@@ -1,6 +1,38 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { getUserOnboardingStatus, hasSelectedPlan } from "@/actions/user";
+
+const PLATFORM_DOMAIN =
+  process.env.NEXT_PUBLIC_PLATFORM_DOMAIN?.replace(/^https?:\/\//, "")?.replace(/\/.*$/, "") || "myredovate.com";
+
+const RESERVED_SUBDOMAINS = new Set(["www", "app"]);
+const LOCAL_HOSTS = new Set(["localhost", "localhost:3000", "127.0.0.1", "127.0.0.1:3000"]);
+
+function rewritePlatformSubdomain(req: NextRequest) {
+  const hostname = req.headers.get("host") || "";
+
+  if (!hostname || LOCAL_HOSTS.has(hostname)) {
+    return null;
+  }
+
+  if (hostname === PLATFORM_DOMAIN || hostname === `www.${PLATFORM_DOMAIN}`) {
+    return null;
+  }
+
+  if (!hostname.endsWith(`.${PLATFORM_DOMAIN}`)) {
+    return null;
+  }
+
+  const subdomain = hostname.replace(`.${PLATFORM_DOMAIN}`, "");
+
+  if (!subdomain || RESERVED_SUBDOMAINS.has(subdomain)) {
+    return null;
+  }
+
+  const url = req.nextUrl.clone();
+  url.pathname = `/preview/${subdomain}`;
+  return NextResponse.rewrite(url);
+}
 
 const isPublicRoute = createRouteMatcher([
   "/sign-in(.*)",
@@ -14,6 +46,11 @@ const isPlansRoute = createRouteMatcher(["/plans"]);
 const isDashboardRoute = createRouteMatcher(["/dashboard(.*)"]);
 
 export default clerkMiddleware(async (auth, req) => {
+  const rewriteResponse = rewritePlatformSubdomain(req);
+  if (rewriteResponse) {
+    return rewriteResponse;
+  }
+
   const { userId } = await auth();
 
   // If user is not signed in and trying to access a protected route, redirect to sign in
