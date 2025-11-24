@@ -18,6 +18,7 @@ import {
   IconBriefcase,
   IconWorld,
 } from "@tabler/icons-react"
+import { RedovateLogo } from "@/components/redovate-logo"
 
 import { NavMain } from "@/components/nav-main"
 import { NavSecondary } from "@/components/nav-secondary"
@@ -159,8 +160,8 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
               className="data-[slot=sidebar-menu-button]:p-1.5!"
             >
               <a href="#">
-                <IconInnerShadowTop className="size-5!" />
-                <span className="text-base font-semibold">Acme Inc.</span>
+                <RedovateLogo className="size-8" />
+                <span className="text-base font-bold">Redovate</span>
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>
