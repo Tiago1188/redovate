@@ -1,21 +1,16 @@
 'use server';
 
 import { auth } from "@clerk/nextjs/server";
-import pool from "@/lib/db";
+import { neon } from "@neondatabase/serverless";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getBusinessData } from "@/actions/business";
-import { getPlanLimits, exceedsLimit } from "@/lib/plan-limits";
+import { exceedsLimit } from "@/lib/plan-limits";
 import { getUserPlanType } from "@/actions/user";
 
-const ServiceSchema = z.object({
-  id: z.string(),
-  title: z.string().min(1, "Service name is required"),
-  description: z.string().min(1, "Description is required"),
-  price: z.string().optional(),
-});
+import { ServiceSchema, type Service } from "@/validations/services";
 
-export type Service = z.infer<typeof ServiceSchema>;
+export { type Service };
 
 export async function getServices() {
   const { userId } = await auth();
@@ -26,7 +21,7 @@ export async function getServices() {
 
   // Ensure services are in the correct format
   const services = Array.isArray(business.services) ? business.services : [];
-  
+
   // Map to ensure ID exists (for legacy data)
   return services.map((s: any) => ({
     id: s.id || crypto.randomUUID(),
@@ -57,10 +52,12 @@ export async function addService(serviceData: Omit<Service, "id">) {
 
   const updatedServices = [...services, newService];
 
-  await pool.query(
-    `UPDATE businesses SET services = $1, updated_at = now() WHERE id = $2`,
-    [JSON.stringify(updatedServices), business.id]
-  );
+  const sql = neon(process.env.DATABASE_URL!);
+  await sql`
+    UPDATE businesses 
+    SET services = ${JSON.stringify(updatedServices)}, updated_at = now() 
+    WHERE id = ${business.id}
+  `;
 
   revalidatePath("/dashboard/services");
   return { success: true, service: newService };
@@ -81,10 +78,12 @@ export async function updateService(id: string, serviceData: Partial<Service>) {
   const updatedServices = [...services];
   updatedServices[index] = { ...updatedServices[index], ...serviceData };
 
-  await pool.query(
-    `UPDATE businesses SET services = $1, updated_at = now() WHERE id = $2`,
-    [JSON.stringify(updatedServices), business.id]
-  );
+  const sql = neon(process.env.DATABASE_URL!);
+  await sql`
+    UPDATE businesses 
+    SET services = ${JSON.stringify(updatedServices)}, updated_at = now() 
+    WHERE id = ${business.id}
+  `;
 
   revalidatePath("/dashboard/services");
   return { success: true, service: updatedServices[index] };
@@ -100,12 +99,13 @@ export async function deleteService(id: string) {
   const services = await getServices();
   const updatedServices = services.filter(s => s.id !== id);
 
-  await pool.query(
-    `UPDATE businesses SET services = $1, updated_at = now() WHERE id = $2`,
-    [JSON.stringify(updatedServices), business.id]
-  );
+  const sql = neon(process.env.DATABASE_URL!);
+  await sql`
+    UPDATE businesses 
+    SET services = ${JSON.stringify(updatedServices)}, updated_at = now() 
+    WHERE id = ${business.id}
+  `;
 
   revalidatePath("/dashboard/services");
   return { success: true };
 }
-

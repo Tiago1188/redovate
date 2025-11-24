@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from "react";
+import { useState, useOptimistic, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { type Service, addService } from "@/actions/services";
@@ -16,31 +16,52 @@ interface ServicesClientProps {
   maxServices: number;
 }
 
+type ServiceAction =
+  | { type: 'add'; service: Service }
+  | { type: 'update'; service: Service }
+  | { type: 'delete'; id: string };
+
 export function ServicesClient({ initialServices, maxServices }: ServicesClientProps) {
   const router = useRouter();
-  const [services, setServices] = useState<Service[]>(initialServices);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isGenerateDialogOpen, setIsGenerateDialogOpen] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const incrementUsage = useAIUsageStore((state) => state.incrementUsage);
+  const [isPending, startTransition] = useTransition();
+
+  const [optimisticServices, mutateOptimisticServices] = useOptimistic(
+    initialServices,
+    (state, action: ServiceAction) => {
+      switch (action.type) {
+        case 'add':
+          return [...state, action.service];
+        case 'update':
+          return state.map((s) => (s.id === action.service.id ? action.service : s));
+        case 'delete':
+          return state.filter((s) => s.id !== action.id);
+        default:
+          return state;
+      }
+    }
+  );
 
   const handleAddManual = () => {
     setIsAddDialogOpen(true);
   };
 
   const handleOpenGenerate = () => {
-      if (services.length >= maxServices && maxServices < 999) {
-        toast.error("Plan limit reached. Cannot generate more services.");
-        return;
-      }
-      setIsGenerateDialogOpen(true);
+    if (optimisticServices.length >= maxServices && maxServices < 999) {
+      toast.error("Plan limit reached. Cannot generate more services.");
+      return;
+    }
+    setIsGenerateDialogOpen(true);
   };
 
   const handleGenerateAI = async (countToGenerate: number) => {
     setIsGenerating(true);
     try {
       const result = await generateSuggestedServices(countToGenerate);
-      
+
       if (!result.success || !result.services) {
         throw new Error(result.error || "Failed to generate services");
       }
@@ -48,8 +69,15 @@ export function ServicesClient({ initialServices, maxServices }: ServicesClientP
       // Add services sequentially
       let addedCount = 0;
       const newlyAdded: Service[] = [];
+
       for (const service of result.services) {
         try {
+          const tempService = { ...service, id: crypto.randomUUID() };
+
+          startTransition(() => {
+            mutateOptimisticServices({ type: 'add', service: tempService });
+          });
+
           const response = await addService(service);
           if (response?.success && response.service) {
             newlyAdded.push(response.service);
@@ -66,9 +94,7 @@ export function ServicesClient({ initialServices, maxServices }: ServicesClientP
         for (let i = 0; i < addedCount; i++) {
           incrementUsage();
         }
-        setServices((prev) => [...prev, ...newlyAdded]);
         setIsGenerateDialogOpen(false);
-        // Refresh server data in background without a full reload
         router.refresh();
       } else {
         toast.warning("No services were added. You might have reached your limit.");
@@ -77,41 +103,48 @@ export function ServicesClient({ initialServices, maxServices }: ServicesClientP
     } catch (error) {
       toast.error("Something went wrong while generating services.");
       console.error(error);
-      throw error; // Re-throw for the dialog to handle/know
+      throw error;
     } finally {
       setIsGenerating(false);
     }
   };
 
   const handleServiceCreated = (service: Service) => {
-    setServices((prev) => [...prev, service]);
+    // Optimistic update
+    startTransition(() => {
+      mutateOptimisticServices({ type: 'add', service });
+    });
     router.refresh();
   };
 
   const handleServiceUpdated = (service: Service) => {
-    setServices((prev) => prev.map((item) => (item.id === service.id ? service : item)));
+    startTransition(() => {
+      mutateOptimisticServices({ type: 'update', service });
+    });
     router.refresh();
   };
 
   const handleServiceDeleted = (serviceId: string) => {
-    setServices((prev) => prev.filter((item) => item.id !== serviceId));
+    startTransition(() => {
+      mutateOptimisticServices({ type: 'delete', id: serviceId });
+    });
     router.refresh();
   };
 
-  const remainingSlots = maxServices >= 999 ? 999 : maxServices - services.length;
+  const remainingSlots = maxServices >= 999 ? 999 : maxServices - optimisticServices.length;
 
   return (
     <div className="space-y-6 p-6">
       <ServicesHeader
-        currentCount={services.length}
+        currentCount={optimisticServices.length}
         maxCount={maxServices}
         onAdd={handleAddManual}
         onGenerate={handleOpenGenerate}
         isGenerating={isGenerating}
       />
-      
+
       <ServicesTable
-        services={services}
+        services={optimisticServices}
         onServiceUpdated={handleServiceUpdated}
         onServiceDeleted={handleServiceDeleted}
       />
