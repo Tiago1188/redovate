@@ -1,3 +1,4 @@
+import { CSSProperties } from "react";
 import TemplatePageWrapper from "./TemplatePageWrapper";
 import * as Free from "../template/free";
 import * as VoltagePro from "../template/starter/voltage-pro";
@@ -5,8 +6,12 @@ import * as CleanerPro from "../template/starter/cleaner-pro";
 import { THEME_PRESETS } from "@/data/theme-presets";
 import * as Fonts from "@/lib/fonts";
 
+// Define a type for the component map
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type ComponentMap = Record<string, React.ComponentType<any>>;
+
 // Define the component maps for each theme
-const FREE_MAP = {
+const FREE_MAP: ComponentMap = {
   HeroSection: Free.HeroSection,
   AboutSection: Free.AboutSection,
   ListingsSection: Free.ListingsSection,
@@ -16,7 +21,7 @@ const FREE_MAP = {
   MetaSection: Free.MetaSection,
 };
 
-const VOLTAGE_PRO_MAP = {
+const VOLTAGE_PRO_MAP: ComponentMap = {
   NavigationSection: VoltagePro.NavigationSection,
   HeroSection: VoltagePro.HeroSection,
   ServicesSection: VoltagePro.ServicesSection,
@@ -26,7 +31,7 @@ const VOLTAGE_PRO_MAP = {
   FooterSection: VoltagePro.FooterSection,
 };
 
-const CLEANER_PRO_MAP = {
+const CLEANER_PRO_MAP: ComponentMap = {
   NavigationSection: CleanerPro.NavigationSection,
   HeroSection: CleanerPro.HeroSection,
   ServicesSection: CleanerPro.ServicesSection,
@@ -38,7 +43,7 @@ const CLEANER_PRO_MAP = {
 
 // Map template slugs/names to their component maps
 // We'll use a default fallback if the exact slug isn't found
-const THEME_MAPS: Record<string, any> = {
+const THEME_MAPS: Record<string, ComponentMap> = {
   "default": FREE_MAP,
   "voltage-pro-free": VOLTAGE_PRO_MAP,
   "voltage-pro": VOLTAGE_PRO_MAP,
@@ -47,11 +52,13 @@ const THEME_MAPS: Record<string, any> = {
 
 type SectionComponent = {
   type: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any;
 };
 
 interface RenderTemplateProps {
   components?: SectionComponent[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data?: any;
   showBranding?: boolean;
   templateSlug?: string;
@@ -93,10 +100,10 @@ export default function RenderTemplate({
   // We check if the font exists in our fonts map, otherwise default or leave empty
   let fontClass = "";
   if (customFont) {
-     // Map font ID to class name if needed, or use ID directly if it matches class convention
-     // Our convention is font ID "poppins" -> class "font-poppins"
-     // But the input customFont is likely the ID "poppins"
-     fontClass = `font-${customFont}`;
+    // Map font ID to class name if needed, or use ID directly if it matches class convention
+    // Our convention is font ID "poppins" -> class "font-poppins"
+    // But the input customFont is likely the ID "poppins"
+    fontClass = `font-${customFont}`;
   }
 
   const finalClass = `${themeClass} ${fontClass}`.trim();
@@ -111,33 +118,33 @@ export default function RenderTemplate({
   }
 
   return (
-    <div style={style as any} className="contents">
-        <TemplatePageWrapper className={finalClass}>
-          {components.map((section, i) => {
-            const Component = sectionMap[section.type];
-            
-            // Fallback: try to find the component in the default map if not in the specific one
-            // (Useful if we mix and match or if a key is missing in a specific theme)
-            const FinalComponent = Component || (THEME_MAPS["default"] as any)[section.type];
+    <div className="contents">
+      <TemplatePageWrapper className={finalClass} style={style as CSSProperties}>
+        {components.map((section, i) => {
+          const Component = sectionMap[section.type];
 
-            if (!FinalComponent) {
-                console.warn(`Component type "${section.type}" not found for template "${templateSlug}"`);
-                return null;
-            }
+          // Fallback: try to find the component in the default map if not in the specific one
+          // (Useful if we mix and match or if a key is missing in a specific theme)
+          const FinalComponent = Component || THEME_MAPS["default"][section.type];
 
-            // Helper to get data for the specific section
-            // It tries data[section.type] first, then data[section.id] if available
-            const sectionData = data[section.type] || (section.id ? data[section.id] : undefined);
+          if (!FinalComponent) {
+            console.warn(`Component type "${section.type}" not found for template "${templateSlug}"`);
+            return null;
+          }
 
-            return <FinalComponent key={i} data={sectionData} />;
-          })}
+          // Helper to get data for the specific section
+          // It tries data[section.type] first, then data[section.id] if available
+          const sectionData = data[section.type] || (section.id ? data[section.id] : undefined);
 
-          {showBranding && (
-            <div className="text-xs text-gray-400 text-right py-10 px-4">
-              Powered by Redovate
-            </div>
-          )}
-        </TemplatePageWrapper>
+          return <FinalComponent key={i} data={sectionData} />;
+        })}
+
+        {showBranding && (
+          <div className="text-xs text-gray-400 text-right py-10 px-4">
+            Powered by Redovate
+          </div>
+        )}
+      </TemplatePageWrapper>
     </div>
   );
 }

@@ -5,7 +5,7 @@ import RenderTemplate from "@/components/template-renderer/RenderTemplate";
 
 export default async function SitePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  
+
   // 1. Fetch the business by slug
   const business = await getBusinessBySlug(slug);
   if (!business) {
@@ -18,7 +18,7 @@ export default async function SitePage({ params }: { params: Promise<{ slug: str
   // If no active template, show 404 (or could be a "Coming Soon" placeholder)
   if (!activeTemplate) {
     console.log(`No active template found for business: ${slug}`);
-    notFound(); 
+    notFound();
   }
 
   // 3. Prepare data for the template renderer
@@ -70,7 +70,7 @@ export default async function SitePage({ params }: { params: Promise<{ slug: str
   };
 
   // 4. Extract theme customizations
-  const customTheme = business.theme?.theme;
+  const customTheme = business.theme?.themeId;
   const customFont = business.theme?.font;
   const customColors = business.theme?.colors;
 
