@@ -1,5 +1,7 @@
 "use client";
 
+import Image from "next/image";
+
 // Helper to inject theme CSS variables
 const ThemeStyles = ({ theme }: { theme: any }) => {
   if (!theme) return null;
@@ -20,7 +22,19 @@ interface HeroData {
 }
 
 export function HeroSection({ data, theme }: { data?: HeroData; theme?: any }) {
-  const heroImage = data?.hero_image || "https://images.unsplash.com/photo-1598514982842-ffe228d3ccf8?q=80&auto=format&fit=crop&w=1600";
+  // Validate hero_image is a valid URL string before using it
+  const isValidImageUrl = (url: string | undefined): boolean => {
+    if (!url || typeof url !== 'string' || url.trim() === '') return false;
+    try {
+      const parsed = new URL(url);
+      return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+    } catch {
+      return false;
+    }
+  };
+
+  const defaultImage = "https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=2070&auto=format&fit=crop";
+  const heroImage: string = isValidImageUrl(data?.hero_image) ? data!.hero_image! : defaultImage;
   const primaryColor = theme?.primary || "#0ea5e9";
 
   return (
@@ -28,7 +42,9 @@ export function HeroSection({ data, theme }: { data?: HeroData; theme?: any }) {
       <ThemeStyles theme={theme} />
       {/* Background Image with Overlay */}
       <div className="absolute inset-0 z-0">
-        <img
+        <Image
+          width={1920}
+          height={1080}
           src={heroImage}
           alt="Hero background"
           className="w-full h-full object-cover"

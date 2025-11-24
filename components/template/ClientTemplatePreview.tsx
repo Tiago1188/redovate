@@ -36,14 +36,14 @@ export default function ClientTemplatePreview({
 }: ClientTemplatePreviewProps) {
   // Initialize state based on mode
   const defaultTheme = template.slug.includes('voltage-pro') ? 'theme-voltage-pro' : 'theme-neutral';
-  
+
   const [customTheme, setCustomTheme] = useState<string>(
     mode === 'edit' && initialTheme?.themeId ? initialTheme.themeId : defaultTheme
   );
   const [customFont, setCustomFont] = useState<string>(
     mode === 'edit' && initialTheme?.font ? initialTheme.font : "inter"
   );
-  
+
   // For colors, we use the initialTheme colors if available in edit mode, 
   // otherwise undefined (which falls back to theme preset defaults)
   const [customColors, setCustomColors] = useState<{
@@ -59,21 +59,26 @@ export default function ClientTemplatePreview({
   const [device, setDevice] = useState<DeviceType>('desktop');
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [isSaving, startTransition] = useTransition();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const isAllowed = userPlan !== 'free';
 
   const handleThemeChange = (themeId: string) => {
     if (mode === 'onboarding' || !isAllowed) return;
     setCustomTheme(themeId);
-    
+
     const preset = THEME_PRESETS.find(p => p.id === themeId);
     if (preset) {
-        setCustomColors({
-            primary: preset.colors.primary,
-            background: preset.colors.background
-        });
+      setCustomColors({
+        primary: preset.colors.primary,
+        background: preset.colors.background
+      });
     } else {
-        setCustomColors(undefined);
+      setCustomColors(undefined);
     }
   };
 
@@ -82,25 +87,25 @@ export default function ClientTemplatePreview({
   };
 
   const handleColorChange = (key: 'primary' | 'background', value: string) => {
-      if (mode === 'onboarding' || !isAllowed) return;
-      setCustomColors(prev => {
-          const base = prev || { primary: '#000000', background: '#ffffff' }; // fallback
-          return { ...base, [key]: value };
-      });
+    if (mode === 'onboarding' || !isAllowed) return;
+    setCustomColors(prev => {
+      const base = prev || { primary: '#000000', background: '#ffffff' }; // fallback
+      return { ...base, [key]: value };
+    });
   };
 
   const handleSave = () => {
     if (!businessId) return;
-    
+
     startTransition(async () => {
       try {
         const themeData: ThemeData = {
           font: customFont,
           colors: {
-              ...(customColors || { primary: '#000000', background: '#ffffff' }),
-              // Ensure required fields if missing from customColors
-              secondary: '#f8fafc',
-              foreground: '#0f172a'
+            ...(customColors || { primary: '#000000', background: '#ffffff' }),
+            // Ensure required fields if missing from customColors
+            secondary: '#f8fafc',
+            foreground: '#0f172a'
           },
           themeId: customTheme
         };
@@ -142,7 +147,7 @@ export default function ClientTemplatePreview({
 
   return (
     <div className="min-h-screen bg-zinc-100 dark:bg-zinc-950 flex flex-col relative overflow-hidden">
-      
+
       {/* Top Bar */}
       <div className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
         <div className="container flex h-14 items-center justify-between relative">
@@ -165,63 +170,63 @@ export default function ClientTemplatePreview({
 
           {/* Device Controls */}
           <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center bg-zinc-100 dark:bg-zinc-800 p-1 rounded-lg border border-zinc-200 dark:border-zinc-700">
-             <Button
-                variant="ghost"
-                size="icon"
-                className={cn("h-8 w-8", device === 'desktop' && "bg-white dark:bg-zinc-950 shadow-sm")}
-                onClick={() => setDevice('desktop')}
-                title="Desktop view"
-             >
-                <Monitor className="h-4 w-4" />
-                <span className="sr-only">Desktop</span>
-             </Button>
-             <Button
-                variant="ghost"
-                size="icon"
-                className={cn("h-8 w-8", device === 'tablet' && "bg-white dark:bg-zinc-950 shadow-sm")}
-                onClick={() => setDevice('tablet')}
-                title="Tablet view"
-             >
-                <Tablet className="h-4 w-4" />
-                <span className="sr-only">Tablet</span>
-             </Button>
-             <Button
-                variant="ghost"
-                size="icon"
-                className={cn("h-8 w-8", device === 'mobile' && "bg-white dark:bg-zinc-950 shadow-sm")}
-                onClick={() => setDevice('mobile')}
-                title="Mobile view"
-             >
-                <Smartphone className="h-4 w-4" />
-                <span className="sr-only">Mobile</span>
-             </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className={cn("h-8 w-8", device === 'desktop' && "bg-white dark:bg-zinc-950 shadow-sm")}
+              onClick={() => setDevice('desktop')}
+              title="Desktop view"
+            >
+              <Monitor className="h-4 w-4" />
+              <span className="sr-only">Desktop</span>
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className={cn("h-8 w-8", device === 'tablet' && "bg-white dark:bg-zinc-950 shadow-sm")}
+              onClick={() => setDevice('tablet')}
+              title="Tablet view"
+            >
+              <Tablet className="h-4 w-4" />
+              <span className="sr-only">Tablet</span>
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className={cn("h-8 w-8", device === 'mobile' && "bg-white dark:bg-zinc-950 shadow-sm")}
+              onClick={() => setDevice('mobile')}
+              title="Mobile view"
+            >
+              <Smartphone className="h-4 w-4" />
+              <span className="sr-only">Mobile</span>
+            </Button>
           </div>
 
           <div>
             {mode === 'onboarding' ? (
-                <UseTemplateButton 
-                    templateId={template.id} 
-                    // In onboarding mode, we don't pass customizations anymore as per requirement
-                    // The user selects the default template
-                    customizations={undefined}
-                    redirectPath={redirectPath}
-                />
+              <UseTemplateButton
+                templateId={template.id}
+                // In onboarding mode, we don't pass customizations anymore as per requirement
+                // The user selects the default template
+                customizations={undefined}
+                redirectPath={redirectPath}
+              />
             ) : (
-                <Button 
-                    onClick={handleSave} 
-                    disabled={isSaving}
-                    className="bg-primary text-primary-foreground mr-2 sm:mr-0"
-                    size="sm"
-                >
-                    {isSaving ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                        <>
-                            <Save className="h-4 w-4 sm:mr-2" />
-                            <span className="hidden sm:inline">Save Changes</span>
-                        </>
-                    )}
-                </Button>
+              <Button
+                onClick={handleSave}
+                disabled={isSaving}
+                className="bg-primary text-primary-foreground mr-2 sm:mr-0"
+                size="sm"
+              >
+                {isSaving ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <>
+                    <Save className="h-4 w-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Save Changes</span>
+                  </>
+                )}
+              </Button>
             )}
           </div>
         </div>
@@ -229,35 +234,35 @@ export default function ClientTemplatePreview({
 
       {/* Template Preview Area */}
       <div className="w-full h-[calc(100vh-3.5rem)] overflow-hidden flex items-center justify-center p-4 bg-zinc-100 dark:bg-zinc-900/50">
-        <div 
-            className={cn(
-                "transition-all duration-300 ease-in-out bg-white shadow-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800",
-                device === 'desktop' && "w-full h-full rounded-md",
-                device === 'tablet' && "w-[768px] h-[90%] rounded-lg",
-                device === 'mobile' && "w-[375px] h-[85%] rounded-[2rem] border-4 border-zinc-800 dark:border-zinc-700"
-            )}
+        <div
+          className={cn(
+            "transition-all duration-300 ease-in-out bg-white shadow-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800",
+            device === 'desktop' && "w-full h-full rounded-md",
+            device === 'tablet' && "w-[768px] h-[90%] rounded-lg",
+            device === 'mobile' && "w-[375px] h-[85%] rounded-[2rem] border-4 border-zinc-800 dark:border-zinc-700"
+          )}
         >
-            <iframe
-                ref={iframeRef}
-                src={iframeUrl}
-                onLoad={handleIframeLoad}
-                className="w-full h-full border-0 bg-white"
-                title="Template Preview"
-            />
+          <iframe
+            ref={iframeRef}
+            src={iframeUrl}
+            onLoad={handleIframeLoad}
+            className="w-full h-full border-0 bg-white"
+            title="Template Preview"
+          />
         </div>
       </div>
 
       {/* Customizer - Only in Edit Mode */}
-      {mode === 'edit' && (
-          <TemplateCustomizer
-            currentTheme={customTheme}
-            currentFont={customFont}
-            currentColors={customColors}
-            onThemeChange={handleThemeChange}
-            onFontChange={handleFontChange}
-            onColorChange={handleColorChange}
-            userPlan={userPlan}
-          />
+      {mounted && mode === 'edit' && (
+        <TemplateCustomizer
+          currentTheme={customTheme}
+          currentFont={customFont}
+          currentColors={customColors}
+          onThemeChange={handleThemeChange}
+          onFontChange={handleFontChange}
+          onColorChange={handleColorChange}
+          userPlan={userPlan}
+        />
       )}
     </div>
   );
