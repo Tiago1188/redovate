@@ -3,7 +3,8 @@
 import { randomBytes } from "crypto";
 import { auth } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
-import pool from "@/lib/db";
+import { neon } from "@neondatabase/serverless";
+import { resolveTxt } from "node:dns/promises";
 import { getBusinessData } from "@/actions/business";
 import { getUserPlanType } from "@/actions/user";
 import { getPlanLimits } from "@/lib/plan-limits";
@@ -49,19 +50,18 @@ export async function updateSubdomainAction(data: { subdomain: string }) {
     return { success: true, slug: subdomain, url: getPlatformDomainUrl(subdomain) };
   }
 
-  const existing = await pool.query(
-    `SELECT 1 FROM businesses WHERE slug = $1 AND id <> $2 LIMIT 1`,
-    [subdomain, business.id]
-  );
+  const sql = neon(process.env.DATABASE_URL!);
+  const existing = await sql`
+    SELECT 1 FROM businesses WHERE slug = ${subdomain} AND id <> ${business.id} LIMIT 1
+  `;
 
-  if ((existing.rowCount ?? 0) > 0) {
+  if (existing.length > 0) {
     throw new Error("That subdomain is already taken. Please choose another.");
   }
 
-  await pool.query(
-    `UPDATE businesses SET slug = $1, updated_at = now() WHERE id = $2`,
-    [subdomain, business.id]
-  );
+  await sql`
+    UPDATE businesses SET slug = ${subdomain}, updated_at = now() WHERE id = ${business.id}
+  `;
 
   await revalidateDashboardDomain();
 
@@ -87,40 +87,39 @@ export async function updateCustomDomainAction(data: { domain: string | null }) 
   const parsedDomain = hasDomainValue ? CustomDomainSchema.parse(normalized) : null;
   const domainChanged = parsedDomain !== (business.domain || null);
 
+  const sql = neon(process.env.DATABASE_URL!);
+
   if (!hasDomainValue) {
-    await pool.query(
-      `UPDATE businesses
-       SET domain = NULL,
-           dns_verification_token = NULL,
-           verified = false,
-           verified_date = NULL,
-           verified_method = NULL,
-           website_url = NULL,
-           updated_at = now()
-       WHERE id = $1`,
-      [business.id]
-    );
+    await sql`
+      UPDATE businesses
+      SET domain = NULL,
+          dns_verification_token = NULL,
+          verified = false,
+          verified_date = NULL,
+          verified_method = NULL,
+          website_url = NULL,
+          updated_at = now()
+      WHERE id = ${business.id}
+    `;
   } else if (domainChanged) {
-    await pool.query(
-      `UPDATE businesses
-       SET domain = $1,
-           dns_verification_token = NULL,
-           verified = false,
-           verified_date = NULL,
-           verified_method = NULL,
-           website_url = NULL,
-           updated_at = now()
-       WHERE id = $2`,
-      [parsedDomain, business.id]
-    );
+    await sql`
+      UPDATE businesses
+      SET domain = ${parsedDomain},
+          dns_verification_token = NULL,
+          verified = false,
+          verified_date = NULL,
+          verified_method = NULL,
+          website_url = NULL,
+          updated_at = now()
+      WHERE id = ${business.id}
+    `;
   } else {
-    await pool.query(
-      `UPDATE businesses
-       SET domain = $1,
-           updated_at = now()
-       WHERE id = $2`,
-      [parsedDomain, business.id]
-    );
+    await sql`
+      UPDATE businesses
+      SET domain = ${parsedDomain},
+          updated_at = now()
+      WHERE id = ${business.id}
+    `;
   }
 
   await revalidateDashboardDomain();
@@ -147,17 +146,17 @@ export async function generateDnsTokenAction() {
   }
 
   const token = randomBytes(16).toString("hex");
+  const sql = neon(process.env.DATABASE_URL!);
 
-  await pool.query(
-    `UPDATE businesses
-     SET dns_verification_token = $1,
-         verified = false,
-         verified_date = NULL,
-         verified_method = NULL,
-         updated_at = now()
-     WHERE id = $2`,
-    [token, business.id]
-  );
+  await sql`
+    UPDATE businesses
+    SET dns_verification_token = ${token},
+        verified = false,
+        verified_date = NULL,
+        verified_method = NULL,
+        updated_at = now()
+    WHERE id = ${business.id}
+  `;
 
   await revalidateDashboardDomain();
 
@@ -172,6 +171,52 @@ export async function generateDnsTokenAction() {
   };
 }
 
+export async function verifyDomainAction() {
+  const userId = await requireAuth();
+  const business = await requireBusiness();
+
+  if (!business.domain || !business.dnsVerificationToken) {
+    throw new Error("Domain or verification token missing.");
+  }
+
+  const hostname = `_redovate.${business.domain}`;
+  let records: string[][] = [];
+
+  try {
+    records = await resolveTxt(hostname);
+  } catch (error) {
+    console.error("DNS resolution failed:", error);
+    throw new Error(`Could not find TXT record for ${hostname}. Please verify your DNS settings.`);
+  }
+
+  const flatRecords = records.flat();
+  const isVerified = flatRecords.includes(business.dnsVerificationToken);
+
+  if (!isVerified) {
+    throw new Error("Verification failed. TXT record does not match the token.");
+  }
+
+  const sql = neon(process.env.DATABASE_URL!);
+  const verifiedDate = new Date();
+
+  await sql`
+    UPDATE businesses
+    SET verified = true,
+        verified_date = ${verifiedDate},
+        verified_method = 'dns-txt',
+        updated_at = now()
+    WHERE id = ${business.id}
+  `;
+
+  await revalidateDashboardDomain();
+
+  return {
+    success: true,
+    verified: true,
+    verifiedDate: verifiedDate.toISOString(),
+  };
+}
+
 export async function publishSiteAction() {
   await requireAuth();
   const business = await requireBusiness();
@@ -180,13 +225,14 @@ export async function publishSiteAction() {
   const publishedAt = new Date();
   const liveUrl = business.domain && business.verified ? `https://${business.domain}` : defaultUrl;
 
-  await pool.query(
-    `UPDATE businesses
-     SET website_url = $1,
-         updated_at = $2
-     WHERE id = $3`,
-    [liveUrl, publishedAt, business.id]
-  );
+  const sql = neon(process.env.DATABASE_URL!);
+
+  await sql`
+    UPDATE businesses
+    SET website_url = ${liveUrl},
+        updated_at = ${publishedAt}
+    WHERE id = ${business.id}
+  `;
 
   await revalidateDashboardDomain();
 
@@ -196,4 +242,3 @@ export async function publishSiteAction() {
     publishedAt: publishedAt.toISOString(),
   };
 }
-

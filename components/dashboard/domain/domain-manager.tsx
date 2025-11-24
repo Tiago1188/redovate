@@ -4,9 +4,9 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { toast } from "sonner";
 import {
+  IconCheck,
   IconCopy,
   IconExternalLink,
   IconRefresh,
@@ -34,33 +34,14 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import {
-  CustomDomainSchema,
-  SubdomainSchema,
   PLATFORM_SUBDOMAIN_SUFFIX,
   getPlatformDomainUrl,
-  normalizeDomain,
-  normalizeSubdomain,
 } from "@/lib/validators/domain";
-import { updateSubdomainAction, updateCustomDomainAction, generateDnsTokenAction, publishSiteAction } from "@/actions/domain";
+import { updateSubdomainAction, updateCustomDomainAction, generateDnsTokenAction, publishSiteAction, verifyDomainAction } from "@/actions/domain";
 import { generateDomainSuggestion } from "@/actions/ai/domains";
 import { useAIUsageStore } from "@/stores/use-ai-usage-store";
-
-const SubdomainFormSchema = z.object({
-  subdomain: z
-    .string()
-    .transform((value) => normalizeSubdomain(value))
-    .pipe(SubdomainSchema),
-});
-
-const CustomDomainFormSchema = z.object({
-  domain: z
-    .string()
-    .transform((value) => {
-      const normalized = normalizeDomain(value);
-      return normalized.length === 0 ? "" : normalized;
-    })
-    .pipe(z.union([CustomDomainSchema, z.literal("")])),
-});
+import { DomainHelpDialog } from "./domain-help-dialog";
+import { SubdomainFormSchema, CustomDomainFormSchema, type SubdomainFormValues, type CustomDomainFormValues } from "@/validations/domain";
 
 const publishedDateFormatter = new Intl.DateTimeFormat("en-GB", {
   dateStyle: "short",
@@ -68,9 +49,6 @@ const publishedDateFormatter = new Intl.DateTimeFormat("en-GB", {
   hour12: false,
   timeZone: "UTC",
 });
-
-type SubdomainFormValues = z.infer<typeof SubdomainFormSchema>;
-type CustomDomainFormValues = z.infer<typeof CustomDomainFormSchema>;
 
 interface DomainManagerProps {
   planType: string;
@@ -98,15 +76,17 @@ export function DomainManager({ planType, canUseCustomDomain, business }: Domain
   const [verifiedDate, setVerifiedDate] = useState<string | null>(business.verifiedDate);
   const [liveUrl, setLiveUrl] = useState(
     business.websiteUrl ||
-      (business.domain && business.verified ? `https://${business.domain}` : getPlatformDomainUrl(business.slug))
+    (business.domain && business.verified ? `https://${business.domain}` : getPlatformDomainUrl(business.slug))
   );
   const [lastPublishedAt, setLastPublishedAt] = useState<string | null>(business.websiteUrl ? business.updatedAt : null);
 
   const [isSavingSubdomain, setIsSavingSubdomain] = useState(false);
   const [isSavingCustomDomain, setIsSavingCustomDomain] = useState(false);
   const [isGeneratingDns, setIsGeneratingDns] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [isGeneratingAi, setIsGeneratingAi] = useState(false);
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
 
   const subdomainForm = useForm<SubdomainFormValues>({
     resolver: zodResolver(SubdomainFormSchema),
@@ -218,6 +198,26 @@ export function DomainManager({ planType, canUseCustomDomain, business }: Domain
       toast.error(message);
     } finally {
       setIsGeneratingDns(false);
+    }
+  };
+
+  const handleVerifyDomain = async () => {
+    if (!savedDomain || !dnsToken) return;
+    setIsVerifying(true);
+    try {
+      const result = await verifyDomainAction();
+      if (result?.success && result.verified) {
+        setVerified(true);
+        if (result.verifiedDate) {
+          setVerifiedDate(result.verifiedDate);
+        }
+        toast.success("Domain verified successfully!");
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Verification failed";
+      toast.error(message);
+    } finally {
+      setIsVerifying(false);
     }
   };
 
@@ -337,13 +337,21 @@ export function DomainManager({ planType, canUseCustomDomain, business }: Domain
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle>Custom Domain</CardTitle>
-            <CardDescription>
-              {canUseCustomDomain
-                ? "Connect your own domain and verify ownership."
-                : "Upgrade to unlock custom domains and remove Redovate branding."}
-            </CardDescription>
+          <CardHeader className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <CardTitle>Custom Domain</CardTitle>
+              <CardDescription>
+                {canUseCustomDomain
+                  ? "Connect your own domain and verify ownership."
+                  : "Upgrade to unlock custom domains and remove Redovate branding."}
+              </CardDescription>
+            </div>
+            {canUseCustomDomain && (
+              <Button variant="outline" size="sm" onClick={() => setIsHelpOpen(true)}>
+                <IconSparkles className="mr-2 h-4 w-4" />
+                Setup Guide
+              </Button>
+            )}
           </CardHeader>
           <CardContent className="space-y-4">
             {canUseCustomDomain ? (
@@ -376,6 +384,17 @@ export function DomainManager({ planType, canUseCustomDomain, business }: Domain
                         <IconRefresh className="mr-2 h-4 w-4" />
                         {isGeneratingDns ? "Generating..." : "Generate DNS TXT"}
                       </Button>
+                      {dnsToken && !verified && (
+                        <Button
+                          type="button"
+                          variant="default"
+                          disabled={isVerifying}
+                          onClick={handleVerifyDomain}
+                        >
+                          <IconCheck className="mr-2 h-4 w-4" />
+                          {isVerifying ? "Verifying..." : "Verify Domain"}
+                        </Button>
+                      )}
                     </div>
                   </form>
                 </Form>
@@ -452,7 +471,8 @@ export function DomainManager({ planType, canUseCustomDomain, business }: Domain
           </CardFooter>
         </Card>
       </div>
+
+      <DomainHelpDialog open={isHelpOpen} onOpenChange={setIsHelpOpen} />
     </div>
   );
 }
-
