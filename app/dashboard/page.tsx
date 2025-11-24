@@ -17,13 +17,13 @@ export default async function Page() {
   const businessData = await getBusinessData();
   const planType = (await getUserPlanType()) || 'free';
   const limits = getPlanLimits(planType);
-  
+
   // Check if user has an active template - if not, redirect to template selection
   const hasTemplate = await hasActiveTemplate();
   if (!hasTemplate) {
     redirect("/onboarding/template");
   }
-  
+
   const activeTemplate = await getActiveTemplate();
 
   const sections = await getDashboardSections();
@@ -39,17 +39,17 @@ export default async function Page() {
     <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6 px-4 md:px-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h2 className="text-2xl font-bold tracking-tight">Dashboard</h2>
-        <div className="flex gap-2">
-           <Button asChild variant="outline" className="w-full sm:w-auto">
+        <div className="flex flex-col sm:flex-row gap-2">
+          <Button asChild variant="outline" className="w-full sm:w-auto">
             <Link href={businessData?.slug ? getPlatformDomainUrl(businessData.slug) : "#"} target="_blank">
-                <ExternalLink className="mr-2 h-4 w-4" />
-                Public Preview
+              <ExternalLink className="mr-2 h-4 w-4" />
+              Public Preview
             </Link>
           </Button>
           <Button asChild className="w-full sm:w-auto">
             <Link href={`/editor/${activeTemplate?.slug}`}>
-                <Palette className="mr-2 h-4 w-4" />
-                Customize Template
+              <Palette className="mr-2 h-4 w-4" />
+              Customize Template
             </Link>
           </Button>
         </div>
@@ -65,8 +65,8 @@ export default async function Page() {
           />
         )}
         {sections.map((section) => {
-          const href = section.name === 'ServicesSection' 
-            ? '/dashboard/services' 
+          const href = section.name === 'ServicesSection'
+            ? '/dashboard/services'
             : `/dashboard/sections/${section.name}`;
 
           return (
