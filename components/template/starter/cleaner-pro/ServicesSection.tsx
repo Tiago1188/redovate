@@ -1,4 +1,8 @@
+'use client';
+
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { useState } from "react";
 import {
   Zap,
   Home,
@@ -10,12 +14,14 @@ import {
   BedDouble,
   ArrowRight,
   LucideIcon,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 
 type ServiceItem = {
   title: string;
   description: string;
-  icon?: string; 
+  icon?: string;
 };
 
 export interface ServicesSectionData {
@@ -36,6 +42,7 @@ const ICONS: Record<string, LucideIcon> = {
 };
 
 export function ServicesSection({ data }: { data?: ServicesSectionData }) {
+  const [showAll, setShowAll] = useState(false);
   const services =
     data?.services ??
     [
@@ -56,6 +63,10 @@ export function ServicesSection({ data }: { data?: ServicesSectionData }) {
       },
     ];
 
+  const INITIAL_LIMIT = 6;
+  const displayedServices = showAll ? services : services.slice(0, INITIAL_LIMIT);
+  const hasMore = services.length > INITIAL_LIMIT;
+
   return (
     <section id="services" className="py-24 bg-background relative">
       <div className="container mx-auto px-4">
@@ -69,28 +80,27 @@ export function ServicesSection({ data }: { data?: ServicesSectionData }) {
               {data?.subheading ?? "We offer a comprehensive range of cleaning solutions tailored to your specific needs."}
             </p>
           </div>
-          <a href="#contact" className="group flex items-center font-semibold text-primary hover:text-primary/80 transition-colors">
-            View All Services <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
-          </a>
+          {/* Removed static link, replaced with dynamic toggle below if needed, or keep as anchor if preferred. 
+              Given the requirement, the toggle is the priority. */}
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {services.map((service, index) => {
+          {displayedServices.map((service, index) => {
             const Icon = (service.icon && ICONS[service.icon]) || Sparkles;
             return (
-              <Card 
-                key={index} 
+              <Card
+                key={index}
                 className="group relative p-8 bg-secondary/20 hover:bg-primary text-foreground hover:text-primary-foreground border-0 transition-all duration-300 overflow-hidden"
               >
                 <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                   <Icon className="w-24 h-24" />
+                  <Icon className="w-24 h-24" />
                 </div>
-                
+
                 <div className="relative z-10">
                   <div className="w-12 h-12 rounded-full bg-background group-hover:bg-white/20 flex items-center justify-center mb-6 transition-colors shadow-sm">
                     <Icon className="w-6 h-6 text-primary group-hover:text-white" />
                   </div>
-                  
+
                   <h3 className="text-xl font-bold mb-3">{service.title}</h3>
                   <p className="text-muted-foreground group-hover:text-primary-foreground/90 text-sm leading-relaxed">
                     {service.description}
@@ -100,6 +110,26 @@ export function ServicesSection({ data }: { data?: ServicesSectionData }) {
             );
           })}
         </div>
+
+        {hasMore && (
+          <div className="mt-12 text-center">
+            <Button
+              variant="outline"
+              onClick={() => setShowAll(!showAll)}
+              className="gap-2"
+            >
+              {showAll ? (
+                <>
+                  Show Less <ChevronUp className="w-4 h-4" />
+                </>
+              ) : (
+                <>
+                  Show All Services <ChevronDown className="w-4 h-4" />
+                </>
+              )}
+            </Button>
+          </div>
+        )}
       </div>
     </section>
   );

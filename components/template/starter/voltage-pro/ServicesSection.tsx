@@ -1,4 +1,8 @@
+'use client';
+
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { useState } from "react";
 import {
   Zap,
   Home,
@@ -7,6 +11,8 @@ import {
   ShieldCheck,
   Clock,
   LucideIcon,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 
 type ServiceItem = {
@@ -31,6 +37,7 @@ const ICONS: Record<string, LucideIcon> = {
 };
 
 export function ServicesSection({ data }: { data?: ServicesSectionData }) {
+  const [showAll, setShowAll] = useState(false);
   const services =
     data?.services ??
     [
@@ -54,6 +61,10 @@ export function ServicesSection({ data }: { data?: ServicesSectionData }) {
       },
     ];
 
+  const INITIAL_LIMIT = 6;
+  const displayedServices = showAll ? services : services.slice(0, INITIAL_LIMIT);
+  const hasMore = services.length > INITIAL_LIMIT;
+
   return (
     <section id="services" className="py-24 bg-secondary/50">
       <div className="container mx-auto px-4">
@@ -69,7 +80,7 @@ export function ServicesSection({ data }: { data?: ServicesSectionData }) {
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {services.map((service, index) => {
+          {displayedServices.map((service, index) => {
             const Icon = service.icon ? ICONS[service.icon] : Zap;
             return (
               <Card key={index} className="p-6 bg-card border-border hover:border-primary transition-all">
@@ -82,6 +93,26 @@ export function ServicesSection({ data }: { data?: ServicesSectionData }) {
             );
           })}
         </div>
+
+        {hasMore && (
+          <div className="mt-12 text-center">
+            <Button
+              variant="outline"
+              onClick={() => setShowAll(!showAll)}
+              className="gap-2"
+            >
+              {showAll ? (
+                <>
+                  Show Less <ChevronUp className="w-4 h-4" />
+                </>
+              ) : (
+                <>
+                  Show All Services <ChevronDown className="w-4 h-4" />
+                </>
+              )}
+            </Button>
+          </div>
+        )}
       </div>
     </section>
   );

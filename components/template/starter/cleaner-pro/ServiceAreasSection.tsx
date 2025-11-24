@@ -1,4 +1,8 @@
-import { MapPin } from "lucide-react";
+'use client';
+
+import { MapPin, ChevronDown, ChevronUp } from "lucide-react";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
 
 export interface ServiceAreasSectionData {
   heading?: string;
@@ -7,8 +11,13 @@ export interface ServiceAreasSectionData {
 }
 
 export function ServiceAreasSection({ data }: { data?: ServiceAreasSectionData }) {
+  const [showAll, setShowAll] = useState(false);
   const areas =
     data?.areas ?? ["Sydney CBD", "North Sydney", "Eastern Suburbs", "Inner West", "Parramatta"];
+
+  const INITIAL_LIMIT = 6;
+  const displayedAreas = showAll ? areas : areas.slice(0, INITIAL_LIMIT);
+  const hasMore = areas.length > INITIAL_LIMIT;
 
   return (
     <section id="areas" className="py-24 bg-primary text-primary-foreground">
@@ -25,7 +34,7 @@ export function ServiceAreasSection({ data }: { data?: ServiceAreasSectionData }
         </div>
 
         <div className="flex flex-wrap justify-center gap-3 max-w-4xl mx-auto">
-          {areas.map((area, index) => (
+          {displayedAreas.map((area, index) => (
             <span
               key={index}
               className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/10 transition-all text-white font-medium"
@@ -35,9 +44,29 @@ export function ServiceAreasSection({ data }: { data?: ServiceAreasSectionData }
             </span>
           ))}
         </div>
-        
+
+        {hasMore && (
+          <div className="mt-8">
+            <Button
+              variant="ghost"
+              onClick={() => setShowAll(!showAll)}
+              className="text-white hover:bg-white/10 hover:text-white gap-2"
+            >
+              {showAll ? (
+                <>
+                  Show Less <ChevronUp className="w-4 h-4" />
+                </>
+              ) : (
+                <>
+                  Show All Areas <ChevronDown className="w-4 h-4" />
+                </>
+              )}
+            </Button>
+          </div>
+        )}
+
         <div className="mt-12 pt-12 border-t border-white/10">
-            <p className="text-white/60 text-sm">Don&apos;t see your area? Contact us to check availability.</p>
+          <p className="text-white/60 text-sm">Don&apos;t see your area? Contact us to check availability.</p>
         </div>
       </div>
     </section>
