@@ -67,7 +67,9 @@ export default async function Page() {
         {sections.map((section) => {
           const href = section.name === 'ServicesSection'
             ? '/dashboard/services'
-            : `/dashboard/sections/${section.name}`;
+            : section.name === 'KeywordsSection'
+              ? '/dashboard/keywords'
+              : `/dashboard/sections/${section.name}`;
 
           return (
             <SectionCard

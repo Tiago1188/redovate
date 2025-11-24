@@ -18,6 +18,7 @@ export interface BusinessData {
     servicesRaw: string[];
     locations: any[];
     serviceAreas: string[];
+    keywords: string[];
     hours: any;
     socialLinks: any;
     theme?: any;
@@ -60,6 +61,7 @@ export async function getBusinessData(): Promise<BusinessData | null> {
                 b.services_raw,
                 b.locations,
                 b.service_areas,
+                b.keywords,
                 b.hours,
                 b.social_links,
                 b.theme,
@@ -100,6 +102,7 @@ export async function getBusinessData(): Promise<BusinessData | null> {
             servicesRaw: Array.isArray(row.services_raw) ? row.services_raw : [],
             locations: Array.isArray(row.locations) ? row.locations : [],
             serviceAreas: Array.isArray(row.service_areas) ? row.service_areas : [],
+            keywords: Array.isArray(row.keywords) ? row.keywords : [],
             hours: row.hours || {},
             socialLinks: row.social_links || {},
             theme: row.theme || {},

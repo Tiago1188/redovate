@@ -25,7 +25,7 @@ export async function getDashboardSections(): Promise<DashboardSection[]> {
         // Get the user's business ID, plan type, and services
         // Fetch plan_type from both tables to determine the effective plan
         const businessRes = await pool.query(
-            `SELECT b.id, b.services, u.plan_type as user_plan_type, b.plan_type as business_plan_type
+            `SELECT b.id, b.services, b.keywords, u.plan_type as user_plan_type, b.plan_type as business_plan_type
              FROM businesses b
              JOIN users u ON b.user_id = u.id
              WHERE u.clerk_id = $1
@@ -39,7 +39,7 @@ export async function getDashboardSections(): Promise<DashboardSection[]> {
 
         const business = businessRes.rows[0];
         const businessId = business.id;
-        
+
         // Determine effective plan type (logic mirrored from getUserPlanType)
         const userPlan = business.user_plan_type;
         const businessPlan = business.business_plan_type;
@@ -53,9 +53,9 @@ export async function getDashboardSections(): Promise<DashboardSection[]> {
 
         const userWeight = planWeight(userPlan);
         const businessWeight = planWeight(businessPlan);
-        
+
         const planType = (businessWeight > userWeight ? businessPlan : (userPlan || 'free')) as PlanType;
-        
+
         const services = Array.isArray(business.services) ? business.services : [];
 
         // Get the active template for this business
@@ -90,19 +90,19 @@ export async function getDashboardSections(): Promise<DashboardSection[]> {
             [businessId, templateId]
         );
 
-        return result.rows.map((row) => {
+        const sections: DashboardSection[] = result.rows.map((row) => {
             // Logic for Services card completion
             if (row.name === 'ServicesSection') {
                 const serviceCount = services.length;
                 const minRequired = planType === 'free' ? 3 : 5;
                 const limits = getPlanLimits(planType);
                 const maxAllowed = limits.maxServices;
-                
+
                 // Use max limit as total_items if not unlimited (999), otherwise fallback to minRequired
                 const displayTotal = maxAllowed >= 999 ? minRequired : maxAllowed;
 
                 const isCompleted = serviceCount >= minRequired;
-                
+
                 // Calculate percent based on minRequired for "Completion" status, 
                 // but the UI might use completed_items / total_items for the text.
                 // We want the progress bar to show 100% if they met the requirement, 
@@ -111,10 +111,10 @@ export async function getDashboardSections(): Promise<DashboardSection[]> {
                 // If we want "13/15", we must send total_items=15.
                 // If we want the bar to be full at 13/15 if 5 was the requirement... that's tricky without changing the UI component.
                 // Assuming the user prefers seeing the Limit usage over the "Min Requirement" usage.
-                
+
                 // If we set total_items to 15, 13/15 is 86%.
                 // If we want the status to still be "completed" (green), we rely on the `status` field.
-                
+
                 // Let's calculate percent for the progress bar.
                 // If the status is "completed", usually users expect 100% bar. 
                 // But "13/15" implies a bar that isn't full.
@@ -147,6 +147,51 @@ export async function getDashboardSections(): Promise<DashboardSection[]> {
                 total_items: undefined,
             };
         });
+
+        // Inject Keywords Section
+        const keywords = Array.isArray(business.keywords) ? business.keywords : [];
+        const keywordCount = keywords.length;
+        const limits = getPlanLimits(planType);
+        const maxKeywords = limits.maxKeywords;
+
+        // Determine status and progress for Keywords
+        // Free plan: 5 keywords. Starter: 15. Business: Unlimited.
+        // We'll consider it "completed" if they have at least 1 keyword, 
+        // or maybe if they used some percentage? 
+        // For Services, it was minRequired (3 or 5).
+        // For Keywords, let's say 3 is a good minimum to be "green".
+        const minKeywordsRequired = 3;
+        const isKeywordsCompleted = keywordCount >= minKeywordsRequired;
+
+        const keywordsDisplayTotal = maxKeywords >= 999 ? minKeywordsRequired : maxKeywords;
+
+        let keywordsPercent = 0;
+        if (maxKeywords < 999) {
+            keywordsPercent = Math.min(100, Math.round((keywordCount / maxKeywords) * 100));
+        } else {
+            keywordsPercent = Math.min(100, Math.round((keywordCount / minKeywordsRequired) * 100));
+        }
+
+        const keywordsSection: DashboardSection = {
+            name: 'KeywordsSection',
+            label: 'Keywords',
+            description: 'Manage your SEO keywords',
+            status: isKeywordsCompleted ? 'completed' : (keywordCount > 0 ? 'pending' : 'missing'),
+            completion_percent: keywordsPercent,
+            completed_items: keywordCount,
+            total_items: keywordsDisplayTotal,
+        };
+
+        // Insert Keywords section. 
+        // If ServicesSection exists, put it after that. Otherwise put it at the start.
+        const servicesIndex = sections.findIndex(s => s.name === 'ServicesSection');
+        if (servicesIndex !== -1) {
+            sections.splice(servicesIndex + 1, 0, keywordsSection);
+        } else {
+            sections.unshift(keywordsSection);
+        }
+
+        return sections;
     } catch (error) {
         console.error('Error fetching dashboard sections:', error);
         return [];

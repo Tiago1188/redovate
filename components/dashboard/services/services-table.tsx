@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import { Edit, Trash2, Search, ArrowUpDown } from "lucide-react";
-import { type Service } from "@/actions/services";
+import { toast } from "sonner";
+import { type Service, deleteService } from "@/actions/services";
 import { ServiceDialog } from "./service-dialog";
-import { DeleteDialog } from "./delete-dialog";
+import { DeleteDialog } from "@/components/dashboard/delete-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -29,7 +30,7 @@ export function ServicesTable({
 }: ServicesTableProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
-  
+
   const [editingService, setEditingService] = useState<Service | null>(null);
   const [deletingService, setDeletingService] = useState<Service | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -156,10 +157,19 @@ export function ServicesTable({
             setDeletingService(null);
           }
         }}
-        service={deletingService}
-        onSuccess={(serviceId) => {
-          onServiceDeleted(serviceId);
-          setDeletingService(null);
+        title="Delete Service"
+        description={
+          <span>
+            Are you sure you want to delete <span className="font-medium">&quot;{deletingService?.title}&quot;</span>? This action cannot be undone.
+          </span>
+        }
+        onDelete={async () => {
+          if (deletingService) {
+            await deleteService(deletingService.id);
+            toast.success("Service deleted successfully");
+            onServiceDeleted(deletingService.id);
+            setDeletingService(null);
+          }
         }}
       />
     </div>
