@@ -6,6 +6,7 @@ import { openai } from "@ai-sdk/openai";
 import { z } from "zod";
 import { getBusinessData } from "@/actions/business";
 import { checkAiUsageLimit, incrementAiUsage } from "@/actions/ai/usage";
+import { AiUsageLimitError, formatAiLimitError } from "@/lib/ai-limit-error";
 import { neon } from "@neondatabase/serverless";
 import { revalidatePath } from "next/cache";
 import { getUserPlanType } from "@/actions/user";
@@ -32,15 +33,14 @@ export async function generateKeywords(count: number = 5) {
         throw new Error("Plan limit reached. Upgrade to add more keywords.");
     }
 
-    // Check AI usage limits
-    await checkAiUsageLimit({
-        businessId: business.id,
-        userId,
-        currentUsage: business.aiGenerationsCount,
-        aiPeriodStart: business.aiPeriodStart,
-    });
-
     try {
+        await checkAiUsageLimit({
+            businessId: business.id,
+            userId,
+            currentUsage: business.aiGenerationsCount,
+            aiPeriodStart: business.aiPeriodStart,
+        });
+
         const { object } = await generateObject({
             model: openai("gpt-4o-mini"),
             schema: GeneratedKeywordsSchema,
@@ -93,6 +93,10 @@ export async function generateKeywords(count: number = 5) {
 
         return { success: true, keywords: keywordsToAdd };
     } catch (error) {
+        if (error instanceof AiUsageLimitError) {
+            return { success: false, ...formatAiLimitError(error) };
+        }
+
         console.error("Error generating keywords:", error);
         return { success: false, error: "Failed to generate keywords" };
     }

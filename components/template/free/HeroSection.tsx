@@ -19,6 +19,7 @@ interface HeroData {
   business_name?: string;
   hero_image?: string;
   tagline?: string;
+  cta_primary?: string;
 }
 
 export function HeroSection({ data, theme }: { data?: HeroData; theme?: any }) {
@@ -71,7 +72,7 @@ export function HeroSection({ data, theme }: { data?: HeroData; theme?: any }) {
             className="w-full sm:w-auto inline-flex items-center justify-center px-8 py-4 text-base md:text-lg font-bold text-white transition-all duration-200 rounded-full shadow-lg hover:shadow-xl hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-black"
             style={{ backgroundColor: primaryColor }}
           >
-            Book Now
+            {data?.cta_primary || "Book Now"}
           </a>
         </div>
       </div>

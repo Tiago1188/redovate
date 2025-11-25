@@ -35,6 +35,18 @@ export default async function Page() {
     );
   }
 
+  const heroContent = businessData?.siteContent?.HeroSection || {};
+  const heroRequirements = [
+    heroContent.headline || businessData?.businessName,
+    heroContent.tagline || businessData?.tagline,
+    heroContent.hero_image || businessData?.heroImage,
+    heroContent.cta_primary,
+  ];
+  const heroCompletedItems = heroRequirements.filter((value) => typeof value === "string" && value.trim().length > 0).length;
+  const heroTotalItems = heroRequirements.length;
+  const heroCompletionPercent = heroTotalItems > 0 ? Math.round((heroCompletedItems / heroTotalItems) * 100) : 0;
+  const heroStatus = heroCompletedItems === heroTotalItems ? "completed" : heroCompletedItems > 0 ? "pending" : "missing";
+
   return (
     <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6 px-4 md:px-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -57,14 +69,28 @@ export default async function Page() {
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {businessData && (
-          <DomainCard
-            slug={businessData.slug}
-            domain={businessData.domain}
-            verified={businessData.verified}
-            canUseCustomDomain={limits.customDomain}
-          />
+          <>
+            <DomainCard
+              slug={businessData.slug}
+              domain={businessData.domain}
+              verified={businessData.verified}
+              canUseCustomDomain={limits.customDomain}
+            />
+            <SectionCard
+              key="HeroSectionCard"
+              title="Hero Section"
+              status={heroStatus}
+              completion={heroCompletionPercent}
+              completedItems={heroCompletedItems}
+              totalItems={heroTotalItems}
+              href="/dashboard/hero"
+            />
+          </>
         )}
         {sections.map((section) => {
+          if (section.name === 'HeroSection') {
+            return null;
+          }
           const href = section.name === 'ServicesSection'
             ? '/dashboard/services'
             : section.name === 'KeywordsSection'

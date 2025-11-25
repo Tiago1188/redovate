@@ -19,6 +19,7 @@ export const SiteContentSchema = z.object({
         cta_primary: z.string().describe("Primary call to action text"),
         cta_secondary: z.string().optional().describe("Secondary call to action text"),
         phone: z.string().optional().describe("Phone number"),
+        show_phone_cta: z.boolean().optional().describe("Whether the CTA should show the phone button"),
     }).optional(),
     ServicesSection: z.object({
         heading: z.string().describe("Main heading for services section"),

@@ -3,6 +3,13 @@
 import { auth } from "@clerk/nextjs/server";
 import pool from "@/lib/db";
 
+export interface BusinessImage {
+    id: string;
+    url: string;
+    role?: string;
+    publicId?: string;
+}
+
 export interface BusinessData {
     id: string;
     businessName: string;
@@ -14,6 +21,7 @@ export interface BusinessData {
     email: string | null;
     heroImage: string | null;
     logo: string | null;
+    images: BusinessImage[];
     services: any[];
     servicesRaw: string[];
     locations: any[];
@@ -66,6 +74,7 @@ export async function getBusinessData(): Promise<BusinessData | null> {
                 b.social_links,
                 b.theme,
                 b.site_content,
+                b.images,
                 b.ai_generations_count,
                 b.ai_period_start,
                 b.domain,
@@ -107,6 +116,7 @@ export async function getBusinessData(): Promise<BusinessData | null> {
             socialLinks: row.social_links || {},
             theme: row.theme || {},
             siteContent: row.site_content || {},
+            images: Array.isArray(row.images) ? row.images : [],
             aiGenerationsCount: row.ai_generations_count || 0,
             aiPeriodStart: row.ai_period_start || new Date(),
             domain: row.domain || null,

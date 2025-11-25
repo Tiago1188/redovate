@@ -22,7 +22,8 @@ function mapBusinessDataToContent(data: BusinessData) {
           hero_image: data.heroImage,
           phone: data.phone,
           cta_primary: "Contact Us",
-          cta_secondary: data.phone
+          cta_secondary: data.phone,
+          show_phone_cta: Boolean(data.phone),
       },
       AboutSection: {
           business_name: data.businessName,
@@ -89,6 +90,20 @@ export default async function PreviewPage({ params, searchParams }: PageProps) {
       content[key] = generatedContent[key];
     }
   });
+
+  const heroContent = content.HeroSection || {};
+  const heroShowPhone = Boolean(heroContent.show_phone_cta && business.phone);
+  content.HeroSection = {
+    ...heroContent,
+    hero_image: heroContent.hero_image || business.heroImage,
+    tagline: heroContent.tagline || business.tagline,
+    cta_primary: heroContent.cta_primary || "Book Now",
+    show_phone_cta: heroShowPhone,
+    phone: heroShowPhone ? business.phone : undefined,
+    cta_secondary: heroShowPhone
+      ? heroContent.cta_secondary || business.phone || "Call Now"
+      : heroContent.cta_secondary,
+  };
 
   const components = Array.isArray(template.components)
       ? template.components

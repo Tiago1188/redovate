@@ -21,17 +21,27 @@ export default async function SitePage({ params }: { params: Promise<{ slug: str
     notFound();
   }
 
+  const heroContent = business.siteContent?.HeroSection || {};
+  const showPhoneCTA = Boolean(heroContent.show_phone_cta && business.phone);
+  const heroSectionData = {
+    ...heroContent,
+    business_name: business.businessName,
+    tagline: heroContent.tagline ?? business.tagline,
+    hero_image: heroContent.hero_image ?? business.heroImage,
+    cta_primary: heroContent.cta_primary ?? "Book Now",
+    cta_secondary: showPhoneCTA
+      ? heroContent.cta_secondary || business.phone || "Call Now"
+      : heroContent.cta_secondary,
+    show_phone_cta: showPhoneCTA,
+    phone: showPhoneCTA ? business.phone : undefined,
+  };
+
   // 3. Prepare data for the template renderer
   // Merge global business data into section-specific data
   // This ensures sections have access to core business info even if not explicitly saved in siteContent
   const templateData = {
     ...business.siteContent,
-    HeroSection: {
-      ...business.siteContent?.HeroSection,
-      business_name: business.businessName,
-      tagline: business.tagline,
-      hero_image: business.heroImage,
-    },
+    HeroSection: heroSectionData,
     AboutSection: {
       ...business.siteContent?.AboutSection,
       business_name: business.businessName,

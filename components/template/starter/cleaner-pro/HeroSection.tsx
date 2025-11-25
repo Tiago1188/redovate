@@ -11,10 +11,13 @@ export interface HeroSectionData {
   cta_primary?: string;
   cta_secondary?: string;
   phone?: string;
+  show_phone_cta?: boolean;
 }
 
 export function HeroSection({ data }: { data?: HeroSectionData }) {
-  const phone = data?.phone ?? "1300 123 456";
+  const canShowPhoneCTA = Boolean(data?.show_phone_cta && data?.phone);
+  const phoneHref = data?.phone ? `tel:${data.phone.replace(/\s/g, "")}` : undefined;
+  const secondaryLabel = data?.cta_secondary || data?.phone || "Call Us";
   
   return (
     <section id="hero" className="relative pt-20 pb-32 lg:pt-32 lg:pb-40 overflow-hidden bg-secondary/30">
@@ -61,17 +64,30 @@ export function HeroSection({ data }: { data?: HeroSectionData }) {
                 <a href="#contact">{data?.cta_primary ?? "Book Now"}</a>
               </Button>
 
-              <Button
-                size="lg"
-                variant="outline"
-                className="rounded-full border-2 h-14 px-8 text-lg hover:bg-secondary transition-all"
-                asChild
-              >
-                <a href={`tel:${phone.replace(/\s/g, "")}`}>
-                  <Phone className="mr-2 w-5 h-5" />
-                  {data?.cta_secondary ?? phone}
-                </a>
-              </Button>
+              {canShowPhoneCTA ? (
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="rounded-full border-2 h-14 px-8 text-lg hover:bg-secondary transition-all"
+                  asChild
+                >
+                  <a href={phoneHref}>
+                    <Phone className="mr-2 w-5 h-5" />
+                    {secondaryLabel}
+                  </a>
+                </Button>
+              ) : (
+                data?.cta_secondary && (
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="rounded-full border-2 h-14 px-8 text-lg hover:bg-secondary transition-all"
+                    asChild
+                  >
+                    <a href="#contact">{data.cta_secondary}</a>
+                  </Button>
+                )
+              )}
             </div>
             
             <div className="mt-10 flex items-center gap-4 text-sm text-muted-foreground">
