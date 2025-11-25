@@ -6,6 +6,7 @@ import { randomUUID } from "crypto";
 
 import pool from "@/lib/db";
 import { getBusinessData, type BusinessImage } from "@/actions/business";
+import { getBusinessActiveTemplate } from "@/actions/templates/getBusinessActiveTemplate";
 import { getUserPlanType } from "@/actions/user";
 import { getPlanLimits } from "@/lib/plan-limits";
 import { uploadImageToCloudinary } from "@/lib/cloudinary";
@@ -14,11 +15,25 @@ import { HeroFormSchema, type HeroFormData } from "@/validations/hero";
 const ALLOWED_MIME_TYPES = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
-export async function getHeroSection(): Promise<(HeroFormData & { hasBusinessPhone: boolean }) | null> {
+export type HeroTemplateConfig = {
+  headline?: string;
+  highlight?: string;
+  tagline?: string;
+  subtagline?: string;
+  cta_primary?: string;
+  cta_secondary?: string;
+  show_phone_cta?: boolean | string;
+  hero_image?: string;
+};
+
+export async function getHeroSection(): Promise<(HeroFormData & { hasBusinessPhone: boolean; templateConfig?: HeroTemplateConfig; imageCount: number }) | null> {
   const business = await getBusinessData();
   if (!business) {
     return null;
   }
+
+  const activeTemplate = await getBusinessActiveTemplate(business.id);
+  const templateConfig = activeTemplate?.supported_props?.HeroSection as HeroTemplateConfig | undefined;
 
   const heroContent = business.siteContent?.HeroSection || {};
   const heroImageEntry = business.images.find((img) => img.role === "hero");
@@ -35,6 +50,8 @@ export async function getHeroSection(): Promise<(HeroFormData & { hasBusinessPho
     heroImage,
     heroImagePublicId: heroImageEntry?.publicId,
     hasBusinessPhone: Boolean(business.phone),
+    templateConfig,
+    imageCount: business.images.length,
   };
 }
 

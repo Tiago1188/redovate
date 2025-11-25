@@ -14,6 +14,7 @@ interface HeroImageUploaderProps {
   onRemove: () => void;
   isUploading: boolean;
   maxImages: number;
+  imageCount: number;
 }
 
 export function HeroImageUploader({
@@ -22,9 +23,12 @@ export function HeroImageUploader({
   onRemove,
   isUploading,
   maxImages,
+  imageCount,
 }: HeroImageUploaderProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
-
+  const isUnlimited = maxImages >= 999;
+  const canUpload = isUnlimited || imageUrl || imageCount < maxImages;
+  
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -77,10 +81,15 @@ export function HeroImageUploader({
             <p className="text-sm text-muted-foreground">
               Upload a high-quality image (PNG, JPG, WebP).
             </p>
+            {!canUpload && (
+              <p className="text-xs text-destructive">
+                Image limit reached ({maxImages}). Please delete an image from your gallery to upload a new one.
+              </p>
+            )}
             <Button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              disabled={isUploading}
+              disabled={isUploading || !canUpload}
             >
               <UploadCloud className="mr-2 h-4 w-4" />
               {isUploading ? "Uploading..." : "Upload Image"}

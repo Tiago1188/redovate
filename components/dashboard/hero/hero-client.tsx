@@ -10,13 +10,13 @@ import { Sparkles, Loader2 } from "lucide-react";
 import { HeroFormSchema, type HeroFormData, type HeroFormInput } from "@/validations/hero";
 import { HeroForm } from "./hero-form";
 import { HeroPreview } from "./hero-preview";
-import { saveHeroSection, uploadHeroImage } from "@/actions/hero";
+import { saveHeroSection, uploadHeroImage, type HeroTemplateConfig } from "@/actions/hero";
 import { Button } from "@/components/ui/button";
 import { generateHeroContent } from "@/actions/ai/hero";
 import { useAIUsageStore } from "@/stores/use-ai-usage-store";
 
 interface HeroClientProps {
-  initialData: (HeroFormData & { hasBusinessPhone: boolean }) | null;
+  initialData: (HeroFormData & { hasBusinessPhone: boolean; templateConfig?: HeroTemplateConfig; imageCount: number }) | null;
   maxImages: number;
 }
 
@@ -39,8 +39,9 @@ export function HeroClient({ initialData, maxImages }: HeroClientProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const incrementUsage = useAIUsageStore((state) => state.incrementUsage);
 
-  const { hasBusinessPhone = false, ...initialFormValues } = initialData ?? {
+  const { hasBusinessPhone = false, templateConfig, imageCount = 0, ...initialFormValues } = initialData ?? {
     hasBusinessPhone: false,
+    imageCount: 0,
   };
 
   const form = useForm<HeroFormInput>({
@@ -152,6 +153,8 @@ export function HeroClient({ initialData, maxImages }: HeroClientProps) {
           isUploading={isUploading}
           hasBusinessPhone={hasBusinessPhone}
           maxImages={maxImages}
+          templateConfig={templateConfig}
+          imageCount={imageCount}
         />
 
         <HeroPreview data={watchValues} />
