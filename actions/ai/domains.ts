@@ -6,6 +6,7 @@ import { openai } from "@ai-sdk/openai";
 import { z } from "zod";
 import { getBusinessData } from "@/actions/business";
 import { checkAiUsageLimit, incrementAiUsage } from "@/actions/ai/usage";
+import { AiUsageLimitError, formatAiLimitError } from "@/lib/ai-limit-error";
 import {
   CustomDomainSchema,
   SubdomainSchema,
@@ -31,14 +32,14 @@ export async function generateDomainSuggestion() {
   const business = await getBusinessData();
   if (!business) throw new Error("Business not found");
 
-  await checkAiUsageLimit({
-    businessId: business.id,
-    userId,
-    currentUsage: business.aiGenerationsCount,
-    aiPeriodStart: business.aiPeriodStart,
-  });
-
   try {
+    await checkAiUsageLimit({
+      businessId: business.id,
+      userId,
+      currentUsage: business.aiGenerationsCount,
+      aiPeriodStart: business.aiPeriodStart,
+    });
+
     const { object } = await generateObject({
       model: openai("gpt-4o-mini"),
       schema: DomainSuggestionSchema,
@@ -69,6 +70,13 @@ Custom domain must be available in principle (don't use famous brands).`,
       customDomain: normalizedCustomDomain,
     };
   } catch (error) {
+    if (error instanceof AiUsageLimitError) {
+      return {
+        success: false,
+        ...formatAiLimitError(error),
+      };
+    }
+
     console.error("Error generating domain suggestion:", error);
     return {
       success: false,

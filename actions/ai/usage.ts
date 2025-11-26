@@ -1,8 +1,9 @@
 'use server';
 
 import pool from "@/lib/db";
-import { getPlanLimits } from "@/lib/plan-limits";
+import { getPlanLimits, PlanType } from "@/lib/plan-limits";
 import { getUserPlanType } from "@/actions/user";
+import { AiUsageLimitError } from "@/lib/ai-limit-error";
 
 interface AiUsageContext {
   businessId: string;
@@ -17,11 +18,11 @@ export async function checkAiUsageLimit({
   currentUsage,
   aiPeriodStart,
 }: AiUsageContext) {
-  const plan = (await getUserPlanType(userId)) || "free";
+  const plan = ((await getUserPlanType(userId)) || "free") as PlanType;
   const limits = getPlanLimits(plan);
 
   const now = new Date();
-  const periodStart = new Date(aiPeriodStart || now);
+  let periodStart = new Date(aiPeriodStart || now);
   const oneMonthAgo = new Date(now);
   oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
 
@@ -29,6 +30,7 @@ export async function checkAiUsageLimit({
 
   if (periodStart < oneMonthAgo) {
     usageToCheck = 0;
+    periodStart = now;
     await pool.query(
       `UPDATE businesses SET ai_generations_count = 0, ai_period_start = now() WHERE id = $1`,
       [businessId]
@@ -36,7 +38,15 @@ export async function checkAiUsageLimit({
   }
 
   if (usageToCheck >= limits.maxAiGenerations) {
-    throw new Error(`AI generation limit reached for your ${plan} plan. Upgrade to generate more content.`);
+    const nextReset = new Date(periodStart);
+    nextReset.setMonth(nextReset.getMonth() + 1);
+
+    throw new AiUsageLimitError({
+      plan,
+      limit: limits.maxAiGenerations,
+      currentUsage: usageToCheck,
+      resetsOn: nextReset,
+    });
   }
 
   return { plan, limits, currentUsage: usageToCheck };

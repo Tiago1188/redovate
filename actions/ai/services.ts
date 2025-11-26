@@ -6,6 +6,7 @@ import { openai } from "@ai-sdk/openai";
 import { z } from "zod";
 import { getBusinessData } from "@/actions/business";
 import { checkAiUsageLimit, incrementAiUsage } from "@/actions/ai/usage";
+import { AiUsageLimitError, formatAiLimitError } from "@/lib/ai-limit-error";
 
 const ServiceDescriptionSchema = z.object({
   description: z.string().describe("A professional description of the service (1-2 sentences)."),
@@ -18,15 +19,14 @@ export async function generateServiceDescription(serviceName: string) {
   const business = await getBusinessData();
   if (!business) throw new Error("Business not found");
 
-  // Check usage before generating
-  await checkAiUsageLimit({
-    businessId: business.id,
-    userId,
-    currentUsage: business.aiGenerationsCount,
-    aiPeriodStart: business.aiPeriodStart,
-  });
-
   try {
+    await checkAiUsageLimit({
+      businessId: business.id,
+      userId,
+      currentUsage: business.aiGenerationsCount,
+      aiPeriodStart: business.aiPeriodStart,
+    });
+
     const { object } = await generateObject({
       model: openai("gpt-4o-mini"),
       schema: ServiceDescriptionSchema,
@@ -45,6 +45,10 @@ export async function generateServiceDescription(serviceName: string) {
 
     return { success: true, description: object.description };
   } catch (error) {
+    if (error instanceof AiUsageLimitError) {
+      return { success: false, ...formatAiLimitError(error) };
+    }
+
     console.error("Error generating service description:", error);
     return { success: false, error: "Failed to generate description" };
   }
@@ -64,15 +68,14 @@ export async function generateSuggestedServices(count: number = 3) {
   const business = await getBusinessData();
   if (!business) throw new Error("Business not found");
 
-  // Check usage before generating
-  await checkAiUsageLimit({
-    businessId: business.id,
-    userId,
-    currentUsage: business.aiGenerationsCount,
-    aiPeriodStart: business.aiPeriodStart,
-  });
-
   try {
+    await checkAiUsageLimit({
+      businessId: business.id,
+      userId,
+      currentUsage: business.aiGenerationsCount,
+      aiPeriodStart: business.aiPeriodStart,
+    });
+
     const { object } = await generateObject({
       model: openai("gpt-4o-mini"),
       schema: SuggestedServicesSchema,
@@ -92,6 +95,10 @@ export async function generateSuggestedServices(count: number = 3) {
 
     return { success: true, services: object.services };
   } catch (error) {
+    if (error instanceof AiUsageLimitError) {
+      return { success: false, ...formatAiLimitError(error) };
+    }
+
     console.error("Error generating suggested services:", error);
     return { success: false, error: "Failed to generate suggestions" };
   }
