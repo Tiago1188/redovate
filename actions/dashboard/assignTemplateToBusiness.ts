@@ -1,7 +1,7 @@
 'use server';
 
 import { auth } from "@clerk/nextjs/server";
-import pool from "@/lib/db";
+import sql from "@/lib/db";
 
 export async function assignTemplateToBusiness(templateId: string) {
     const { userId } = await auth();
@@ -12,70 +12,63 @@ export async function assignTemplateToBusiness(templateId: string) {
 
     try {
         // 1. Get the user's business ID
-        const businessRes = await pool.query(
-            `SELECT b.id 
-             FROM businesses b
-             JOIN users u ON b.user_id = u.id
-             WHERE u.clerk_id = $1
-             LIMIT 1`,
-            [userId]
-        );
+        const businessRes = await sql`
+            SELECT b.id 
+            FROM businesses b
+            JOIN users u ON b.user_id = u.id
+            WHERE u.clerk_id = ${userId}
+            LIMIT 1
+        `;
 
-        if (businessRes.rows.length === 0) {
+        if (businessRes.length === 0) {
             throw new Error("Business not found");
         }
 
-        const businessId = businessRes.rows[0].id;
+        const businessId = businessRes[0].id;
 
         // 2. Deactivate any existing active templates for this business
-        await pool.query(
-            `UPDATE business_templates 
-             SET is_active = false 
-             WHERE business_id = $1`,
-            [businessId]
-        );
+        await sql`
+            UPDATE business_templates 
+            SET is_active = false 
+            WHERE business_id = ${businessId}
+        `;
 
         // 3. Insert new selection or update existing one
-        const existingLink = await pool.query(
-            `SELECT id FROM business_templates 
-             WHERE business_id = $1 AND template_id = $2`,
-            [businessId, templateId]
-        );
+        const existingLink = await sql`
+            SELECT id FROM business_templates 
+            WHERE business_id = ${businessId} AND template_id = ${templateId}
+        `;
 
-        if (existingLink.rows.length > 0) {
-            await pool.query(
-                `UPDATE business_templates 
-                 SET is_active = true, updated_at = now() 
-                 WHERE id = $1`,
-                [existingLink.rows[0].id]
-            );
+        if (existingLink.length > 0) {
+            await sql`
+                UPDATE business_templates 
+                SET is_active = true, updated_at = now() 
+                WHERE id = ${existingLink[0].id}
+            `;
         } else {
-            await pool.query(
-                `INSERT INTO business_templates (business_id, template_id, is_active) 
-                 VALUES ($1, $2, true)`,
-                [businessId, templateId]
-            );
+            await sql`
+                INSERT INTO business_templates (business_id, template_id, is_active) 
+                VALUES (${businessId}, ${templateId}, true)
+            `;
         }
 
         // 4. Fetch sections from template_sections for the template
-        const sectionsRes = await pool.query(
-            `SELECT id FROM template_sections 
-             WHERE template_id = $1 
-             ORDER BY sort_order ASC`,
-            [templateId]
-        );
+        const sectionsRes = await sql`
+            SELECT id FROM template_sections 
+            WHERE template_id = ${templateId} 
+            ORDER BY sort_order ASC
+        `;
 
-        const sections = sectionsRes.rows;
+        const sections = sectionsRes;
 
         // 5. Insert rows in business_section_status
         // Use ON CONFLICT to skip duplicates
         for (const section of sections) {
-            await pool.query(
-                `INSERT INTO business_section_status (business_id, section_id, status, completion_percent)
-                 VALUES ($1, $2, 'missing', 0)
-                 ON CONFLICT (business_id, section_id) DO NOTHING`,
-                [businessId, section.id]
-            );
+            await sql`
+                INSERT INTO business_section_status (business_id, section_id, status, completion_percent)
+                VALUES (${businessId}, ${section.id}, 'missing', 0)
+                ON CONFLICT (business_id, section_id) DO NOTHING
+            `;
         }
 
         return { success: true };
@@ -85,4 +78,3 @@ export async function assignTemplateToBusiness(templateId: string) {
         throw new Error(`Failed to assign template: ${errorMessage}`);
     }
 }
-

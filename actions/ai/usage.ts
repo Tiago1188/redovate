@@ -1,6 +1,6 @@
 'use server';
 
-import pool from "@/lib/db";
+import sql from "@/lib/db";
 import { getPlanLimits, PlanType } from "@/lib/plan-limits";
 import { getUserPlanType } from "@/actions/user";
 import { AiUsageLimitError } from "@/lib/ai-limit-error";
@@ -31,10 +31,9 @@ export async function checkAiUsageLimit({
   if (periodStart < oneMonthAgo) {
     usageToCheck = 0;
     periodStart = now;
-    await pool.query(
-      `UPDATE businesses SET ai_generations_count = 0, ai_period_start = now() WHERE id = $1`,
-      [businessId]
-    );
+    await sql`
+      UPDATE businesses SET ai_generations_count = 0, ai_period_start = now() WHERE id = ${businessId}
+    `;
   }
 
   if (usageToCheck >= limits.maxAiGenerations) {
@@ -53,9 +52,7 @@ export async function checkAiUsageLimit({
 }
 
 export async function incrementAiUsage(businessId: string) {
-  await pool.query(
-    `UPDATE businesses SET ai_generations_count = ai_generations_count + 1 WHERE id = $1`,
-    [businessId]
-  );
+  await sql`
+    UPDATE businesses SET ai_generations_count = ai_generations_count + 1 WHERE id = ${businessId}
+  `;
 }
-

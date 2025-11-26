@@ -1,7 +1,7 @@
 'use server';
 
 import { auth } from "@clerk/nextjs/server";
-import pool from "@/lib/db";
+import sql from "@/lib/db";
 import { getPlanLimits, PlanType } from "@/lib/plan-limits";
 
 export interface DashboardSection {
@@ -24,20 +24,19 @@ export async function getDashboardSections(): Promise<DashboardSection[]> {
     try {
         // Get the user's business ID, plan type, and services
         // Fetch plan_type from both tables to determine the effective plan
-        const businessRes = await pool.query(
-            `SELECT b.id, b.services, b.keywords, u.plan_type as user_plan_type, b.plan_type as business_plan_type
-             FROM businesses b
-             JOIN users u ON b.user_id = u.id
-             WHERE u.clerk_id = $1
-             LIMIT 1`,
-            [userId]
-        );
+        const businessRes = await sql`
+            SELECT b.id, b.services, b.keywords, u.plan_type as user_plan_type, b.plan_type as business_plan_type
+            FROM businesses b
+            JOIN users u ON b.user_id = u.id
+            WHERE u.clerk_id = ${userId}
+            LIMIT 1
+        `;
 
-        if (businessRes.rows.length === 0) {
+        if (businessRes.length === 0) {
             return [];
         }
 
-        const business = businessRes.rows[0];
+        const business = businessRes[0];
         const businessId = business.id;
 
         // Determine effective plan type (logic mirrored from getUserPlanType)
@@ -59,38 +58,36 @@ export async function getDashboardSections(): Promise<DashboardSection[]> {
         const services = Array.isArray(business.services) ? business.services : [];
 
         // Get the active template for this business
-        const templateRes = await pool.query(
-            `SELECT template_id 
-             FROM business_templates 
-             WHERE business_id = $1 AND is_active = true
-             LIMIT 1`,
-            [businessId]
-        );
+        const templateRes = await sql`
+            SELECT template_id 
+            FROM business_templates 
+            WHERE business_id = ${businessId} AND is_active = true
+            LIMIT 1
+        `;
 
-        if (templateRes.rows.length === 0) {
+        if (templateRes.length === 0) {
             return [];
         }
 
-        const templateId = templateRes.rows[0].template_id;
+        const templateId = templateRes[0].template_id;
 
         // Join template_sections with business_section_status
         // Filter by current business's active template
-        const result = await pool.query(
-            `SELECT 
+        const result = await sql`
+            SELECT 
                 ts.name,
                 ts.label,
                 ts.description,
                 COALESCE(bss.status, 'missing') as status,
                 COALESCE(bss.completion_percent, 0) as completion_percent
-             FROM template_sections ts
-             LEFT JOIN business_section_status bss 
-                ON ts.id = bss.section_id AND bss.business_id = $1
-             WHERE ts.template_id = $2
-             ORDER BY ts.sort_order ASC`,
-            [businessId, templateId]
-        );
+            FROM template_sections ts
+            LEFT JOIN business_section_status bss 
+            ON ts.id = bss.section_id AND bss.business_id = ${businessId}
+            WHERE ts.template_id = ${templateId}
+            ORDER BY ts.sort_order ASC
+        `;
 
-        const sections: DashboardSection[] = result.rows.map((row) => {
+        const sections: DashboardSection[] = result.map((row) => {
             // Logic for Services card completion
             if (row.name === 'ServicesSection') {
                 const serviceCount = services.length;
@@ -103,22 +100,6 @@ export async function getDashboardSections(): Promise<DashboardSection[]> {
 
                 const isCompleted = serviceCount >= minRequired;
 
-                // Calculate percent based on minRequired for "Completion" status, 
-                // but the UI might use completed_items / total_items for the text.
-                // We want the progress bar to show 100% if they met the requirement, 
-                // even if they haven't hit the max limit.
-                // However, if we pass total_items as maxAllowed, the UI (SectionCard) probably renders a progress bar of completed/total.
-                // If we want "13/15", we must send total_items=15.
-                // If we want the bar to be full at 13/15 if 5 was the requirement... that's tricky without changing the UI component.
-                // Assuming the user prefers seeing the Limit usage over the "Min Requirement" usage.
-
-                // If we set total_items to 15, 13/15 is 86%.
-                // If we want the status to still be "completed" (green), we rely on the `status` field.
-
-                // Let's calculate percent for the progress bar.
-                // If the status is "completed", usually users expect 100% bar. 
-                // But "13/15" implies a bar that isn't full.
-                // I will set the percent to match the usage of the limit if we show the limit.
                 let percent = 0;
                 if (maxAllowed < 999) {
                     percent = Math.min(100, Math.round((serviceCount / maxAllowed) * 100));
@@ -155,11 +136,6 @@ export async function getDashboardSections(): Promise<DashboardSection[]> {
         const maxKeywords = limits.maxKeywords;
 
         // Determine status and progress for Keywords
-        // Free plan: 5 keywords. Starter: 15. Business: Unlimited.
-        // We'll consider it "completed" if they have at least 1 keyword, 
-        // or maybe if they used some percentage? 
-        // For Services, it was minRequired (3 or 5).
-        // For Keywords, let's say 3 is a good minimum to be "green".
         const minKeywordsRequired = 3;
         const isKeywordsCompleted = keywordCount >= minKeywordsRequired;
 

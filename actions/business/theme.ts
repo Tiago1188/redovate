@@ -1,7 +1,7 @@
 'use server';
 
 import { auth } from "@clerk/nextjs/server";
-import pool from "@/lib/db";
+import sql from "@/lib/db";
 
 export interface ThemeColors {
   primary: string;
@@ -26,25 +26,23 @@ export async function updateBusinessTheme(businessId: string, themeData: ThemeDa
 
   try {
     // Verify ownership
-    const ownershipCheck = await pool.query(
-      `SELECT b.id 
-       FROM businesses b
-       JOIN users u ON b.user_id = u.id
-       WHERE b.id = $1 AND u.clerk_id = $2`,
-      [businessId, userId]
-    );
+    const ownershipCheck = await sql`
+      SELECT b.id 
+      FROM businesses b
+      JOIN users u ON b.user_id = u.id
+      WHERE b.id = ${businessId} AND u.clerk_id = ${userId}
+    `;
 
-    if (ownershipCheck.rows.length === 0) {
+    if (ownershipCheck.length === 0) {
       throw new Error("Unauthorized access to business");
     }
 
     // Update theme
-    await pool.query(
-      `UPDATE businesses 
-       SET theme = $1, updated_at = now() 
-       WHERE id = $2`,
-      [JSON.stringify(themeData), businessId]
-    );
+    await sql`
+      UPDATE businesses 
+      SET theme = ${JSON.stringify(themeData)}, updated_at = now() 
+      WHERE id = ${businessId}
+    `;
 
     return { success: true };
   } catch (error) {
@@ -55,20 +53,19 @@ export async function updateBusinessTheme(businessId: string, themeData: ThemeDa
 
 export async function getBusinessTheme(businessId: string): Promise<ThemeData | null> {
   try {
-    const result = await pool.query(
-      `SELECT theme FROM businesses WHERE id = $1`,
-      [businessId]
-    );
+    const result = await sql`
+      SELECT theme FROM businesses WHERE id = ${businessId}
+    `;
 
-    if (result.rows.length === 0) {
+    if (result.length === 0) {
       return null;
     }
 
-    const theme = result.rows[0].theme;
-    
+    const theme = result[0].theme;
+
     // Ensure default structure if theme is empty or partial
     if (!theme || Object.keys(theme).length === 0) {
-        return null;
+      return null;
     }
 
     return theme as ThemeData;
@@ -77,4 +74,3 @@ export async function getBusinessTheme(businessId: string): Promise<ThemeData | 
     return null;
   }
 }
-

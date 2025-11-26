@@ -1,12 +1,12 @@
 'use server';
 
-import pool from "@/lib/db";
+import sql from "@/lib/db";
 import { BusinessData } from "@/actions/business";
 
 export async function getBusinessBySlug(slug: string): Promise<BusinessData | null> {
   try {
-    const result = await pool.query(
-      `SELECT 
+    const result = await sql`
+      SELECT 
           b.id,
           b.business_name,
           b.slug,
@@ -37,16 +37,15 @@ export async function getBusinessBySlug(slug: string): Promise<BusinessData | nu
           b.website_url,
           b.updated_at
        FROM businesses b
-       WHERE b.slug = $1
-       LIMIT 1`,
-      [slug]
-    );
+       WHERE b.slug = ${slug}
+       LIMIT 1
+    `;
 
-    if (result.rows.length === 0) {
+    if (result.length === 0) {
       return null;
     }
 
-    const row = result.rows[0];
+    const row = result[0];
     return {
       id: row.id,
       businessName: row.business_name,

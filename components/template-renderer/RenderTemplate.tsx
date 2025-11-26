@@ -1,54 +1,8 @@
 import { CSSProperties } from "react";
 import TemplatePageWrapper from "./TemplatePageWrapper";
-import * as Free from "../template/free";
-import * as VoltagePro from "../template/starter/voltage-pro";
-import * as CleanerPro from "../template/starter/cleaner-pro";
+import { COMPONENT_MAP } from "@/components/templates/component-map";
 import { THEME_PRESETS } from "@/data/theme-presets";
 import * as Fonts from "@/lib/fonts";
-
-// Define a type for the component map
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type ComponentMap = Record<string, React.ComponentType<any>>;
-
-// Define the component maps for each theme
-const FREE_MAP: ComponentMap = {
-  HeroSection: Free.HeroSection,
-  AboutSection: Free.AboutSection,
-  ListingsSection: Free.ListingsSection,
-  TestimonialsSection: Free.TestimonialsSection,
-  ContactSection: Free.ContactSection,
-  ServicesSection: Free.ServicesSection,
-  MetaSection: Free.MetaSection,
-};
-
-const VOLTAGE_PRO_MAP: ComponentMap = {
-  NavigationSection: VoltagePro.NavigationSection,
-  HeroSection: VoltagePro.HeroSection,
-  ServicesSection: VoltagePro.ServicesSection,
-  ServiceAreasSection: VoltagePro.ServiceAreasSection,
-  AboutSection: VoltagePro.AboutSection,
-  ContactSection: VoltagePro.ContactSection,
-  FooterSection: VoltagePro.FooterSection,
-};
-
-const CLEANER_PRO_MAP: ComponentMap = {
-  NavigationSection: CleanerPro.NavigationSection,
-  HeroSection: CleanerPro.HeroSection,
-  ServicesSection: CleanerPro.ServicesSection,
-  ServiceAreasSection: CleanerPro.ServiceAreasSection,
-  AboutSection: CleanerPro.AboutSection,
-  ContactSection: CleanerPro.ContactSection,
-  FooterSection: CleanerPro.FooterSection,
-};
-
-// Map template slugs/names to their component maps
-// We'll use a default fallback if the exact slug isn't found
-const THEME_MAPS: Record<string, ComponentMap> = {
-  "default": FREE_MAP,
-  "voltage-pro-free": VOLTAGE_PRO_MAP,
-  "voltage-pro": VOLTAGE_PRO_MAP,
-  "cleaner-pro-free": CLEANER_PRO_MAP,
-};
 
 type SectionComponent = {
   type: string;
@@ -81,9 +35,6 @@ export default function RenderTemplate({
   customFont,
   customColors,
 }: RenderTemplateProps) {
-  // Select the appropriate map based on the slug
-  const sectionMap = THEME_MAPS[templateSlug] || THEME_MAPS["default"];
-
   // Determine the base theme class
   // If customTheme is provided, use it.
   // If not provided, check template slug or fallback to neutral
@@ -97,12 +48,10 @@ export default function RenderTemplate({
   }
 
   // Append custom font class if provided
-  // We check if the font exists in our fonts map, otherwise default or leave empty
   let fontClass = "";
   if (customFont) {
-    // Map font ID to class name if needed, or use ID directly if it matches class convention
+    // Map font ID to class name
     // Our convention is font ID "poppins" -> class "font-poppins"
-    // But the input customFont is likely the ID "poppins"
     fontClass = `font-${customFont}`;
   }
 
@@ -121,14 +70,11 @@ export default function RenderTemplate({
     <div className="contents">
       <TemplatePageWrapper className={finalClass} style={style as CSSProperties}>
         {components.map((section, i) => {
-          const Component = sectionMap[section.type];
+          // Use unified component map
+          const Component = COMPONENT_MAP[section.type];
 
-          // Fallback: try to find the component in the default map if not in the specific one
-          // (Useful if we mix and match or if a key is missing in a specific theme)
-          const FinalComponent = Component || THEME_MAPS["default"][section.type];
-
-          if (!FinalComponent) {
-            console.warn(`Component type "${section.type}" not found for template "${templateSlug}"`);
+          if (!Component) {
+            console.warn(`Component type "${section.type}" not found in component map`);
             return null;
           }
 
@@ -136,7 +82,7 @@ export default function RenderTemplate({
           // It tries data[section.type] first, then data[section.id] if available
           const sectionData = data[section.type] || (section.id ? data[section.id] : undefined);
 
-          return <FinalComponent key={i} data={sectionData} />;
+          return <Component key={i} data={sectionData} />;
         })}
 
         {showBranding && (

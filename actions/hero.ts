@@ -4,7 +4,7 @@ import { auth } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
 import { randomUUID } from "crypto";
 
-import pool from "@/lib/db";
+import sql from "@/lib/db";
 import { getBusinessData, type BusinessImage } from "@/actions/business";
 import { getBusinessActiveTemplate } from "@/actions/templates/getBusinessActiveTemplate";
 import { getUserPlanType } from "@/actions/user";
@@ -165,22 +165,15 @@ export async function saveHeroSection(input: unknown) {
 
   const persistedHeroImage = heroImageUrl ?? null;
 
-  await pool.query(
-    `UPDATE businesses
-     SET hero_image = $1,
-         tagline = $2,
-         site_content = $3,
-         images = $4,
-         updated_at = now()
-     WHERE id = $5`,
-    [
-      persistedHeroImage,
-      nextTagline,
-      JSON.stringify(nextSiteContent),
-      JSON.stringify(nextImages),
-      business.id,
-    ]
-  );
+  await sql`
+    UPDATE businesses
+    SET hero_image = ${persistedHeroImage},
+        tagline = ${nextTagline},
+        site_content = ${JSON.stringify(nextSiteContent)},
+        images = ${JSON.stringify(nextImages)},
+        updated_at = now()
+    WHERE id = ${business.id}
+  `;
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/hero");
@@ -191,4 +184,3 @@ export async function saveHeroSection(input: unknown) {
 
   return { success: true };
 }
-

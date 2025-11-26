@@ -3,7 +3,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { generateObject } from "ai";
 import { openai } from "@ai-sdk/openai";
-import pool from "@/lib/db";
+import sql from "@/lib/db";
 import { getBusinessData } from "@/actions/business";
 import { getActiveTemplate } from "@/actions/templates";
 import { getUserPlanType } from "@/actions/user";
@@ -44,10 +44,9 @@ export async function generateSiteContent() {
     if (periodStart < oneMonthAgo) {
         currentUsage = 0;
         // Update start date in DB
-        await pool.query(
-            `UPDATE businesses SET ai_generations_count = 0, ai_period_start = now() WHERE id = $1`,
-            [businessData.id]
-        );
+        await sql`
+            UPDATE businesses SET ai_generations_count = 0, ai_period_start = now() WHERE id = ${businessData.id}
+        `;
     }
 
     if (currentUsage >= limits.maxAiGenerations) {
@@ -57,13 +56,13 @@ export async function generateSiteContent() {
     // ===================================================
     // STEP 1: CLEAN SERVICES
     // ===================================================
-    
+
     // Determine limits
     const minServices = isStarterOrHigher ? 5 : 3;
     const maxServices = isStarterOrHigher ? 15 : 5;
 
-    const servicesRaw = businessData.servicesRaw && businessData.servicesRaw.length > 0 
-        ? businessData.servicesRaw 
+    const servicesRaw = businessData.servicesRaw && businessData.servicesRaw.length > 0
+        ? businessData.servicesRaw
         : businessData.services;
 
     // Helper to get array from maybe array
@@ -99,12 +98,11 @@ export async function generateSiteContent() {
         cleanedServices = object.cleaned_services;
 
         // SAVE CLEANED SERVICES TO DB
-        await pool.query(
-            `UPDATE businesses 
-             SET services = $1, updated_at = now() 
-             WHERE id = $2`,
-            [JSON.stringify(cleanedServices), businessData.id]
-        );
+        await sql`
+            UPDATE businesses 
+            SET services = ${JSON.stringify(cleanedServices)}, updated_at = now() 
+            WHERE id = ${businessData.id}
+        `;
 
     } catch (error) {
         console.error("Service Cleaning Error:", error);
@@ -120,13 +118,13 @@ export async function generateSiteContent() {
     // ===================================================
 
     // 2. Prepare the system prompt based on plan
-    const components = Array.isArray(activeTemplate.components) 
-        ? activeTemplate.components 
+    const components = Array.isArray(activeTemplate.components)
+        ? activeTemplate.components
         : (typeof activeTemplate.components === 'string' ? JSON.parse(activeTemplate.components) : []);
-    
+
     const componentTypes = components.map((c: { type: string }) => c.type).join(", ");
 
-    const locations = businessData.locations && businessData.locations.length > 0 
+    const locations = businessData.locations && businessData.locations.length > 0
         ? businessData.locations.map((l: any) => l.location).join(", ")
         : 'Local Area';
 
@@ -207,14 +205,13 @@ ${formattedServices}
         });
 
         // 4. Save to Database and increment usage
-        await pool.query(
-            `UPDATE businesses 
-             SET site_content = $1, 
-                 ai_generations_count = ai_generations_count + 1,
-                 updated_at = now() 
-             WHERE id = $2`,
-            [JSON.stringify(object), businessData.id]
-        );
+        await sql`
+            UPDATE businesses 
+            SET site_content = ${JSON.stringify(object)}, 
+                ai_generations_count = ai_generations_count + 1,
+                updated_at = now() 
+            WHERE id = ${businessData.id}
+        `;
 
         return { success: true };
     } catch (error) {

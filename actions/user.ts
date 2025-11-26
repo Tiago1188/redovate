@@ -1,7 +1,7 @@
 'use server';
 
 import { auth, clerkClient } from "@clerk/nextjs/server";
-import pool from "@/lib/db";
+import sql from "@/lib/db";
 
 export interface OnboardingStatus {
     hasValidAccountType: boolean;
@@ -26,20 +26,16 @@ export async function selectPlan(planType: 'free' | 'starter') {
     try {
         const client = await clerkClient();
         const user = await client.users.getUser(userId);
+        const email = user.emailAddresses[0].emailAddress;
+        const fullName = user.fullName || "";
 
         // Ensure user exists in our DB (create if needed, update plan if exists)
-        await pool.query(
-            `INSERT INTO users (clerk_id, email, full_name, plan_type) 
-             VALUES ($1, $2, $3, $4)
-             ON CONFLICT (clerk_id) 
-             DO UPDATE SET plan_type = $4, updated_at = now()`,
-            [
-                userId,
-                user.emailAddresses[0].emailAddress,
-                user.fullName || "",
-                planType
-            ]
-        );
+        await sql`
+            INSERT INTO users (clerk_id, email, full_name, plan_type) 
+            VALUES (${userId}, ${email}, ${fullName}, ${planType})
+            ON CONFLICT (clerk_id) 
+            DO UPDATE SET plan_type = ${planType}, updated_at = now()
+        `;
 
         return { success: true };
     } catch (error) {
@@ -70,13 +66,12 @@ export async function hasSelectedPlan(userId?: string): Promise<boolean> {
     }
 
     try {
-        const userRes = await pool.query(
-            `SELECT id FROM users WHERE clerk_id = $1 LIMIT 1`,
-            [clerkUserId]
-        );
+        const userRes = await sql`
+            SELECT id FROM users WHERE clerk_id = ${clerkUserId} LIMIT 1
+        `;
 
         // User exists in DB means they've selected a plan
-        return userRes.rows.length > 0;
+        return userRes.length > 0;
     } catch (error) {
         console.error('Error checking plan selection:', error);
         return false;
@@ -89,15 +84,14 @@ export async function hasSelectedPlan(userId?: string): Promise<boolean> {
  */
 export async function getStarterPlanCount(): Promise<number> {
     try {
-        const result = await pool.query(
-            `SELECT COUNT(DISTINCT u.id) as count
-             FROM users u
-             INNER JOIN businesses b ON b.user_id = u.id
-             WHERE u.plan_type = 'starter'`,
-            []
-        );
+        const result = await sql`
+            SELECT COUNT(DISTINCT u.id) as count
+            FROM users u
+            INNER JOIN businesses b ON b.user_id = u.id
+            WHERE u.plan_type = 'starter'
+        `;
 
-        return parseInt(result.rows[0]?.count || '0', 10);
+        return parseInt(result[0]?.count || '0', 10);
     } catch (error) {
         console.error('Error getting starter plan count:', error);
         return 0;
@@ -119,25 +113,24 @@ export async function getUserPlanType(userId?: string): Promise<'free' | 'starte
 
     try {
         // Check both tables for the plan type
-        const result = await pool.query(
-            `SELECT u.plan_type as user_plan, b.plan_type as business_plan
-             FROM users u
-             LEFT JOIN businesses b ON b.user_id = u.id
-             WHERE u.clerk_id = $1
-             LIMIT 1`,
-            [clerkUserId]
-        );
+        const result = await sql`
+            SELECT u.plan_type as user_plan, b.plan_type as business_plan
+            FROM users u
+            LEFT JOIN businesses b ON b.user_id = u.id
+            WHERE u.clerk_id = ${clerkUserId}
+            LIMIT 1
+        `;
 
-        if (result.rows.length === 0) {
+        if (result.length === 0) {
             return null;
         }
 
-        const userPlan = result.rows[0].user_plan;
-        const businessPlan = result.rows[0].business_plan;
+        const userPlan = result[0].user_plan;
+        const businessPlan = result[0].business_plan;
 
         // Determine the highest plan
         // Plan hierarchy: business > starter > free
-        
+
         const planWeight = (p: string | null) => {
             if (p === 'business') return 3;
             if (p === 'starter') return 2;
@@ -178,19 +171,18 @@ export async function getUserOnboardingStatus(userId?: string): Promise<Onboardi
 
     try {
         // Get user's business from database
-        const userRes = await pool.query(
-            `SELECT b.id, b.business_type 
-             FROM users u
-             LEFT JOIN businesses b ON b.user_id = u.id
-             WHERE u.clerk_id = $1
-             LIMIT 1`,
-            [clerkUserId]
-        );
+        const userRes = await sql`
+            SELECT b.id, b.business_type 
+            FROM users u
+            LEFT JOIN businesses b ON b.user_id = u.id
+            WHERE u.clerk_id = ${clerkUserId}
+            LIMIT 1
+        `;
 
         // If user exists in database and has a business
-        if (userRes.rows.length > 0) {
-            const businessIdValue = userRes.rows[0].id;
-            const businessType = userRes.rows[0].business_type;
+        if (userRes.length > 0) {
+            const businessIdValue = userRes[0].id;
+            const businessType = userRes[0].business_type;
 
             // User has valid account type only if:
             // 1. They have a business (businessId is not null)

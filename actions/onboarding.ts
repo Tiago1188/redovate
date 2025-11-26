@@ -1,7 +1,7 @@
 'use server';
 
 import { auth, clerkClient } from "@clerk/nextjs/server";
-import pool from "@/lib/db";
+import sql from "@/lib/db";
 import { onboardingSchema } from "@/validations/onboarding";
 import { getStarterPlanCount, getUserPlanType } from "@/actions/user";
 import { getPlanLimits, type PlanType } from "@/lib/plan-limits";
@@ -16,7 +16,7 @@ export async function completeOnboarding(formData: FormData) {
     // Extract form data
     const services: string[] = [];
     const serviceAreas: string[] = [];
-    
+
     formData.forEach((value, key) => {
         if (key === 'services[]') {
             services.push(value.toString());
@@ -39,16 +39,16 @@ export async function completeOnboarding(formData: FormData) {
 
     // Validate data with better error handling
     const validationResult = onboardingSchema.safeParse(rawData);
-    
+
     if (!validationResult.success) {
         const errors = validationResult.error.issues.map(err => ({
             field: err.path.join('.'),
             message: err.message,
         }));
-        return { 
-            success: false, 
+        return {
+            success: false,
             error: "Validation failed",
-            errors 
+            errors
         };
     }
 
@@ -105,27 +105,27 @@ export async function completeOnboarding(formData: FormData) {
 
     // Ensure user exists in our DB first
     try {
-        await pool.query(
-            `INSERT INTO users (clerk_id, email, full_name) 
-       VALUES ($1, $2, $3) 
-       ON CONFLICT (clerk_id) DO NOTHING`,
-            [userId, user.emailAddresses[0].emailAddress, user.fullName || ""]
-        );
+        const email = user.emailAddresses[0].emailAddress;
+        const fullName = user.fullName || "";
+
+        await sql`
+            INSERT INTO users (clerk_id, email, full_name) 
+            VALUES (${userId}, ${email}, ${fullName}) 
+            ON CONFLICT (clerk_id) DO NOTHING
+        `;
 
         // Get the internal user ID
-        const userRes = await pool.query(
-            `SELECT id FROM users WHERE clerk_id = $1`,
-            [userId]
-        );
-        const internalUserId = userRes.rows[0]?.id;
+        const userRes = await sql`
+            SELECT id FROM users WHERE clerk_id = ${userId}
+        `;
+        const internalUserId = userRes[0]?.id;
 
         if (!internalUserId) throw new Error("User not found");
 
         // Check if business already exists for this user
-        const existingBusinessRes = await pool.query(
-            `SELECT id FROM businesses WHERE user_id = $1 LIMIT 1`,
-            [internalUserId]
-        );
+        const existingBusinessRes = await sql`
+            SELECT id FROM businesses WHERE user_id = ${internalUserId} LIMIT 1
+        `;
 
         let businessId: string;
 
@@ -140,42 +140,35 @@ export async function completeOnboarding(formData: FormData) {
             location: validatedData.mainLocation,
         }] : [];
 
-        if (existingBusinessRes.rows.length > 0) {
+        // Prepare JSON strings for JSONB columns
+        const servicesJson = JSON.stringify(validatedData.services);
+        const locationsJson = JSON.stringify(locations);
+        const serviceAreasJson = JSON.stringify(validatedData.serviceAreas);
+        const themeJson = JSON.stringify(theme);
+
+        if (existingBusinessRes.length > 0) {
             // Update existing business
-            businessId = existingBusinessRes.rows[0].id;
-            await pool.query(
-                `UPDATE businesses 
-                 SET business_name = $1, 
-                     slug = $2, 
-                     business_type = $3,
-                     about = $4,
-                     category = $5,
-                     year_founded = $6,
-                     services = '[]'::jsonb,
-                     services_raw = $7,
-                     locations = $8,
-                     service_areas = $9,
-                     theme = $10,
-                     updated_at = now()
-                 WHERE id = $11`,
-                [
-                    validatedData.businessName,
-                    slug,
-                    validatedData.accountType,
-                    validatedData.about,
-                    validatedData.category,
-                    validatedData.yearFounded, // This is now number | null
-                    JSON.stringify(validatedData.services),
-                    JSON.stringify(locations),
-                    JSON.stringify(validatedData.serviceAreas),
-                    JSON.stringify(theme),
-                    businessId,
-                ]
-            );
+            businessId = existingBusinessRes[0].id;
+            await sql`
+                UPDATE businesses 
+                SET business_name = ${validatedData.businessName}, 
+                    slug = ${slug}, 
+                    business_type = ${validatedData.accountType},
+                    about = ${validatedData.about},
+                    category = ${validatedData.category},
+                    year_founded = ${validatedData.yearFounded},
+                    services = '[]'::jsonb,
+                    services_raw = ${servicesJson},
+                    locations = ${locationsJson},
+                    service_areas = ${serviceAreasJson},
+                    theme = ${themeJson},
+                    updated_at = now()
+                WHERE id = ${businessId}
+            `;
         } else {
             // Create new business
-            const businessRes = await pool.query(
-                `INSERT INTO businesses (
+            const businessRes = await sql`
+                INSERT INTO businesses (
                     user_id, 
                     business_name, 
                     slug, 
@@ -189,32 +182,31 @@ export async function completeOnboarding(formData: FormData) {
                     service_areas,
                     theme
                 )
-                VALUES ($1, $2, $3, $4, $5, $6, $7, '[]'::jsonb, $8, $9, $10, $11)
-                RETURNING id`,
-                [
-                    internalUserId,
-                    validatedData.businessName,
-                    slug,
-                    validatedData.accountType,
-                    validatedData.about,
-                    validatedData.category,
-                    validatedData.yearFounded, // This is now number | null
-                    JSON.stringify(validatedData.services),
-                    JSON.stringify(locations),
-                    JSON.stringify(validatedData.serviceAreas),
-                    JSON.stringify(theme),
-                ]
-            );
-            businessId = businessRes.rows[0].id;
+                VALUES (
+                    ${internalUserId}, 
+                    ${validatedData.businessName}, 
+                    ${slug}, 
+                    ${validatedData.accountType}, 
+                    ${validatedData.about}, 
+                    ${validatedData.category}, 
+                    ${validatedData.yearFounded}, 
+                    '[]'::jsonb, 
+                    ${servicesJson}, 
+                    ${locationsJson}, 
+                    ${serviceAreasJson}, 
+                    ${themeJson}
+                )
+                RETURNING id
+            `;
+            businessId = businessRes[0].id;
         }
 
         // Track starter plan users who completed onboarding
         // Check if user has starter plan and if they're within the first 500 (grandfathered)
-        const userPlanRes = await pool.query(
-            `SELECT plan_type FROM users WHERE clerk_id = $1`,
-            [userId]
-        );
-        const userPlanType = userPlanRes.rows[0]?.plan_type;
+        const userPlanRes = await sql`
+            SELECT plan_type FROM users WHERE clerk_id = ${userId}
+        `;
+        const userPlanType = userPlanRes[0]?.plan_type;
 
         if (userPlanType === 'starter') {
             // Count how many starter users have completed onboarding (have a business)
@@ -239,14 +231,14 @@ export async function completeOnboarding(formData: FormData) {
     } catch (error) {
         console.error("Onboarding error:", error);
         if (error instanceof Error) {
-            return { 
-                success: false, 
-                error: error.message 
+            return {
+                success: false,
+                error: error.message
             };
         }
-        return { 
-            success: false, 
-            error: "Failed to create or update business" 
+        return {
+            success: false,
+            error: "Failed to create or update business"
         };
     }
 }
