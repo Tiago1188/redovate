@@ -4,6 +4,69 @@ This guide provides step-by-step instructions for creating new templates in the 
 
 ## Architecture Overview
 
+### Database Structure
+
+**Templates Table** (template definitions):
+- `components` - Default section structure for the template
+- `supported_props` - Props each component accepts
+- `fake_content` - Sample data for preview
+
+**Businesses Table** (user instances):
+- `sections` - **User's actual site layout** (order, variants, props)
+- `site_content` - Raw content data
+- `theme` - Colors and fonts
+- `images` - Stored images
+
+### The `business.sections` Field 🎯
+
+**Purpose**: Stores the complete layout blueprint of a user's website.
+
+**What it contains**:
+```json
+[
+  {
+    "id": "uuid",              // unique section identifier
+    "type": "HeroSection",     // component type
+    "order": 0,                // position on page
+    "variant": "cleaner",      // optional: cleaner, voltage, etc.
+    "props": {                 // content for this section
+      "headline": "Welcome",
+      "highlight": "Professional Services",
+      "hero_image": "https://...",
+      "cta_primary": "Book Now"
+    }
+  },
+  {
+    "id": "uuid",
+    "type": "ServicesSection",
+    "order": 1,
+    "variant": "voltage",
+    "props": {
+      "heading": "Our Services",
+      "services": [...]
+    }
+  }
+]
+```
+
+**Why it's crucial**:
+- Defines which sections exist on the user's site
+- Defines the order of sections
+- Stores section-specific variants
+- Stores all props/content for each section
+- Allows users to customize beyond the template
+
+**Relationship to Templates**:
+
+1. **Template Selection**: When a user selects a template, we copy `template.components` → `business.sections`
+2. **User Customization**: User can then add, remove, reorder sections
+3. **Rendering**: The renderer uses `business.sections` as the source of truth
+
+**Key Difference**:
+- `template.components` = Default structure (static, shared)
+- `business.sections` = User's structure (dynamic, unique per business)
+- `business.site_content` = Content only (no structure/order)
+
 ### Component Structure
 ```
 components/
@@ -19,7 +82,7 @@ components/
 ### Key Files
 - **Component Registry**: `lib/templates/templates-registry.ts` - Defines all components and their props
 - **Component Map**: `components/templates/component-map.ts` - Maps component names to implementations
-- **Database Schema**: `schema.sql` - Templates table structure
+- **Database Schema**: `schema.sql` - Templates and businesses table structure
 
 ## Step-by-Step Template Creation
 

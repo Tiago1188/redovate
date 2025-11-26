@@ -101,6 +101,7 @@ CREATE TABLE IF NOT EXISTS businesses(
     social_links JSONB DEFAULT '{}',
 
     website_url TEXT,
+    sections JSONB DEFAULT '[]',
     
 
     -- Domain + DNS verification
