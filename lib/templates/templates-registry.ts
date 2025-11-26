@@ -71,6 +71,7 @@ export const TEMPLATE_COMPONENT_REGISTRY: Record<string, ComponentDefinition> = 
             heading: "string",
             subheading: "string",
             services: "array",
+            variant: "string",
         },
         requiredProps: ["services"],
     },
@@ -81,6 +82,7 @@ export const TEMPLATE_COMPONENT_REGISTRY: Record<string, ComponentDefinition> = 
         allowedProps: {
             heading: "string",
             subheading: "string",
+            variant: "string",
         },
     },
 
@@ -112,6 +114,7 @@ export const TEMPLATE_COMPONENT_REGISTRY: Record<string, ComponentDefinition> = 
             features: "array",
             certifications: "array",
             certifications_title: "string",
+            variant: "string",
         },
     },
 
@@ -122,6 +125,7 @@ export const TEMPLATE_COMPONENT_REGISTRY: Record<string, ComponentDefinition> = 
             heading: "string",
             subheading: "string",
             areas: "array",
+            variant: "string",
         },
     },
 

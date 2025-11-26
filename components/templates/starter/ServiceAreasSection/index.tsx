@@ -1,6 +1,6 @@
 'use client';
 
-import { MapPin, ChevronDown, ChevronUp } from "lucide-react";
+import { MapPin, ChevronDown, ChevronUp, CheckCircle } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
@@ -8,10 +8,12 @@ export interface ServiceAreasSectionData {
     heading?: string;
     subheading?: string;
     areas?: string[];
+    variant?: 'cleaner' | 'voltage' | 'default';
 }
 
 export function ServiceAreasSection({ data }: { data?: ServiceAreasSectionData }) {
     const [showAll, setShowAll] = useState(false);
+    const variant = data?.variant || 'cleaner';
     const areas =
         data?.areas ?? ["Sydney CBD", "North Sydney", "Eastern Suburbs", "Inner West", "Parramatta"];
 
@@ -19,6 +21,70 @@ export function ServiceAreasSection({ data }: { data?: ServiceAreasSectionData }
     const displayedAreas = showAll ? areas : areas.slice(0, INITIAL_LIMIT);
     const hasMore = areas.length > INITIAL_LIMIT;
 
+    // Voltage Variant - Compact List Layout
+    if (variant === 'voltage') {
+        return (
+            <section id="areas" className="py-24 bg-background">
+                <div className="container mx-auto px-4">
+                    <div className="max-w-4xl mx-auto">
+                        <div className="mb-12">
+                            <h2 className="text-4xl md:text-5xl font-bold mb-4">
+                                {data?.heading ?? "Service Coverage"}
+                            </h2>
+                            {data?.subheading && (
+                                <p className="text-xl text-muted-foreground">
+                                    {data.subheading}
+                                </p>
+                            )}
+                        </div>
+
+                        {/* Two Column List */}
+                        <div className="grid md:grid-cols-2 gap-4">
+                            {displayedAreas.map((area, index) => (
+                                <div
+                                    key={index}
+                                    className="flex items-center gap-3 p-4 rounded-lg bg-secondary/30 border border-border hover:border-primary/50 transition-all"
+                                >
+                                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                                        <CheckCircle className="w-4 h-4 text-primary" />
+                                    </div>
+                                    <span className="font-medium">{area}</span>
+                                </div>
+                            ))}
+                        </div>
+
+                        {hasMore && (
+                            <div className="mt-8 text-center">
+                                <Button
+                                    variant="outline"
+                                    onClick={() => setShowAll(!showAll)}
+                                    className="gap-2"
+                                >
+                                    {showAll ? (
+                                        <>
+                                            Show Less <ChevronUp className="w-4 h-4" />
+                                        </>
+                                    ) : (
+                                        <>
+                                            Show All Areas <ChevronDown className="w-4 h-4" />
+                                        </>
+                                    )}
+                                </Button>
+                            </div>
+                        )}
+
+                        <div className="mt-12 p-6 rounded-lg bg-primary/5 border border-primary/20">
+                            <p className="text-center text-muted-foreground">
+                                Don&apos;t see your area? <span className="text-primary font-semibold">Contact us</span> to check availability.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        );
+    }
+
+    // Cleaner Variant (Default) - Badge Style
     return (
         <section id="areas" className="py-24 bg-primary text-primary-foreground">
             <div className="container mx-auto px-4 text-center">
