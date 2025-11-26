@@ -78,6 +78,7 @@ CREATE TABLE IF NOT EXISTS businesses(
 
     tagline TEXT,
     about TEXT,
+    
 
     locations JSONB DEFAULT '[]',
     service_areas JSONB DEFAULT '[]',
@@ -100,6 +101,7 @@ CREATE TABLE IF NOT EXISTS businesses(
     social_links JSONB DEFAULT '{}',
 
     website_url TEXT,
+    
 
     -- Domain + DNS verification
     domain TEXT,
@@ -117,6 +119,7 @@ CREATE TABLE IF NOT EXISTS businesses(
     -- AI Usage Tracking
     ai_generations_count INT DEFAULT 0,
     ai_period_start TIMESTAMP DEFAULT now(),
+    sections JSONB DEFAULT '[]',
 
     created_at TIMESTAMP DEFAULT now(),
     updated_at TIMESTAMP DEFAULT now()
