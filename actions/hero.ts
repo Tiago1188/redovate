@@ -36,13 +36,16 @@ export async function getHeroSection(): Promise<(HeroFormData & { hasBusinessPho
   const templateConfig = activeTemplate?.supported_props?.HeroSection as HeroTemplateConfig | undefined;
 
   const heroContent = business.siteContent?.HeroSection || {};
+  const baseContent = business.baseContent || {};
+
   const heroImageEntry = business.images.find((img) => img.role === "hero");
-  const heroImage = heroContent.hero_image || heroImageEntry?.url || business.heroImage || undefined;
+  // Prioritize: 1. Site Content (Template specific override) -> 2. Base Content (Unified) -> 3. Legacy/Fallback
+  const heroImage = heroContent.hero_image || baseContent.heroImage || heroImageEntry?.url || business.heroImage || undefined;
 
   return {
     headline: heroContent.headline || business.businessName || "",
     highlight: heroContent.highlight || "",
-    tagline: heroContent.tagline || business.tagline || "",
+    tagline: heroContent.tagline || baseContent.tagline || business.tagline || "",
     subtagline: heroContent.subtagline || "",
     ctaPrimary: heroContent.cta_primary || "Book Now",
     ctaSecondary: heroContent.cta_secondary || "",
@@ -165,11 +168,20 @@ export async function saveHeroSection(input: unknown) {
 
   const persistedHeroImage = heroImageUrl ?? null;
 
+  // Sync with base_content
+  const currentBaseContent = business.baseContent || {};
+  const nextBaseContent = {
+    ...currentBaseContent,
+    tagline: nextTagline || currentBaseContent.tagline,
+    heroImage: persistedHeroImage || currentBaseContent.heroImage,
+  };
+
   await sql`
     UPDATE businesses
     SET hero_image = ${persistedHeroImage},
         tagline = ${nextTagline},
         site_content = ${JSON.stringify(nextSiteContent)},
+        base_content = ${JSON.stringify(nextBaseContent)},
         images = ${JSON.stringify(nextImages)},
         updated_at = now()
     WHERE id = ${business.id}

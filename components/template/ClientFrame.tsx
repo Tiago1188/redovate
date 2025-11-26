@@ -18,6 +18,7 @@ interface ClientFrameProps {
   // Allow disabling message listeners for production view
   enableListeners?: boolean;
   showBranding?: boolean;
+  baseContent?: any;
 }
 
 export default function ClientFrame({
@@ -29,7 +30,8 @@ export default function ClientFrame({
   initialFont,
   initialColors,
   enableListeners = true,
-  showBranding = true
+  showBranding = true,
+  baseContent
 }: ClientFrameProps) {
   const [theme, setTheme] = useState(initialTheme);
   const [font, setFont] = useState(initialFont);
@@ -69,6 +71,7 @@ export default function ClientFrame({
         secondary: '#f8fafc',
         foreground: '#0f172a'
       } : undefined}
+      baseContent={baseContent}
     />
   );
 }

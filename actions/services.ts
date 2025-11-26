@@ -19,15 +19,20 @@ export async function getServices() {
   const business = await getBusinessData();
   if (!business) return [];
 
+  // Prioritize base_content services if available
+  const baseContentServices = business.baseContent?.services;
+  const legacyServices = business.services;
+
   // Ensure services are in the correct format
-  const services = Array.isArray(business.services) ? business.services : [];
+  const services = Array.isArray(baseContentServices) ? baseContentServices : (Array.isArray(legacyServices) ? legacyServices : []);
 
   // Map to ensure ID exists (for legacy data)
   return services.map((s: any) => ({
     id: s.id || crypto.randomUUID(),
     title: s.title || s.name || "",
     description: s.description || "",
-    price: s.price || ""
+    price: s.price || "",
+    icon: s.icon || ""
   })) as Service[];
 }
 
@@ -52,10 +57,19 @@ export async function addService(serviceData: Omit<Service, "id">) {
 
   const updatedServices = [...services, newService];
 
+  // Sync with base_content
+  const currentBaseContent = business.baseContent || {};
+  const nextBaseContent = {
+    ...currentBaseContent,
+    services: updatedServices
+  };
+
   const sql = neon(process.env.DATABASE_URL!);
   await sql`
     UPDATE businesses 
-    SET services = ${JSON.stringify(updatedServices)}, updated_at = now() 
+    SET services = ${JSON.stringify(updatedServices)}, 
+        base_content = ${JSON.stringify(nextBaseContent)},
+        updated_at = now() 
     WHERE id = ${business.id}
   `;
 
@@ -78,10 +92,19 @@ export async function updateService(id: string, serviceData: Partial<Service>) {
   const updatedServices = [...services];
   updatedServices[index] = { ...updatedServices[index], ...serviceData };
 
+  // Sync with base_content
+  const currentBaseContent = business.baseContent || {};
+  const nextBaseContent = {
+    ...currentBaseContent,
+    services: updatedServices
+  };
+
   const sql = neon(process.env.DATABASE_URL!);
   await sql`
     UPDATE businesses 
-    SET services = ${JSON.stringify(updatedServices)}, updated_at = now() 
+    SET services = ${JSON.stringify(updatedServices)}, 
+        base_content = ${JSON.stringify(nextBaseContent)},
+        updated_at = now() 
     WHERE id = ${business.id}
   `;
 
@@ -99,10 +122,19 @@ export async function deleteService(id: string) {
   const services = await getServices();
   const updatedServices = services.filter(s => s.id !== id);
 
+  // Sync with base_content
+  const currentBaseContent = business.baseContent || {};
+  const nextBaseContent = {
+    ...currentBaseContent,
+    services: updatedServices
+  };
+
   const sql = neon(process.env.DATABASE_URL!);
   await sql`
     UPDATE businesses 
-    SET services = ${JSON.stringify(updatedServices)}, updated_at = now() 
+    SET services = ${JSON.stringify(updatedServices)}, 
+        base_content = ${JSON.stringify(nextBaseContent)},
+        updated_at = now() 
     WHERE id = ${business.id}
   `;
 

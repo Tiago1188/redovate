@@ -102,6 +102,7 @@ CREATE TABLE IF NOT EXISTS businesses(
 
     website_url TEXT,
     sections JSONB DEFAULT '[]',
+    base_content JSONB DEFAULT '{}'::jsonb,
     
 
     -- Domain + DNS verification

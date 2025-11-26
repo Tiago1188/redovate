@@ -18,6 +18,9 @@ const contactSchema = z.object({
 export interface ContactSectionData {
     heading?: string;
     subheading?: string;
+    phone?: string; // From BaseWebsiteContent
+    email?: string; // From BaseWebsiteContent
+    address?: string; // From BaseWebsiteContent
     variant?: 'cleaner' | 'voltage' | 'default';
 }
 
@@ -30,6 +33,10 @@ export function ContactSection({ data }: { data?: ContactSectionData }) {
     });
     const [errors, setErrors] = useState<Record<string, string>>({});
     const variant = data?.variant || 'cleaner';
+
+    const phone = data?.phone || "1300 123 456";
+    const email = data?.email || "info@example.com";
+    const address = data?.address || "Sydney, NSW";
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -88,7 +95,7 @@ export function ContactSection({ data }: { data?: ContactSectionData }) {
                                     </div>
                                     <div>
                                         <div className="font-semibold text-white">Phone</div>
-                                        <div className="text-white/80">1300 123 456</div>
+                                        <div className="text-white/80">{phone}</div>
                                     </div>
                                 </div>
 
@@ -98,7 +105,7 @@ export function ContactSection({ data }: { data?: ContactSectionData }) {
                                     </div>
                                     <div>
                                         <div className="font-semibold text-white">Email</div>
-                                        <div className="text-white/80">info@example.com</div>
+                                        <div className="text-white/80">{email}</div>
                                     </div>
                                 </div>
 
@@ -108,7 +115,7 @@ export function ContactSection({ data }: { data?: ContactSectionData }) {
                                     </div>
                                     <div>
                                         <div className="font-semibold text-white">Location</div>
-                                        <div className="text-white/80">Sydney, NSW</div>
+                                        <div className="text-white/80">{address}</div>
                                     </div>
                                 </div>
 

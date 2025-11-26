@@ -19,7 +19,11 @@ export async function getKeywords() {
     if (!business) return [];
 
     // Ensure keywords are in the correct format (array of strings)
-    const keywords = Array.isArray(business.keywords) ? business.keywords : [];
+    // Prioritize base_content keywords if available
+    const baseContentKeywords = business.baseContent?.keywords;
+    const legacyKeywords = business.keywords;
+
+    const keywords = Array.isArray(baseContentKeywords) ? baseContentKeywords : (Array.isArray(legacyKeywords) ? legacyKeywords : []);
 
     // Map to object format for the UI if needed, or keep as strings
     // The UI expects objects with IDs for optimistic updates, so we'll map them
@@ -57,10 +61,19 @@ export async function addKeyword(keyword: string) {
 
     const updatedKeywords = [...currentKeywords, keyword];
 
+    // Sync with base_content
+    const currentBaseContent = business.baseContent || {};
+    const nextBaseContent = {
+        ...currentBaseContent,
+        keywords: updatedKeywords
+    };
+
     const sql = neon(process.env.DATABASE_URL!);
     await sql`
     UPDATE businesses 
-    SET keywords = ${JSON.stringify(updatedKeywords)}, updated_at = now() 
+    SET keywords = ${JSON.stringify(updatedKeywords)}, 
+        base_content = ${JSON.stringify(nextBaseContent)},
+        updated_at = now() 
     WHERE id = ${business.id}
   `;
 
@@ -88,10 +101,19 @@ export async function updateKeyword(oldKeyword: string, newKeyword: string) {
     const updatedKeywords = [...currentKeywords];
     updatedKeywords[index] = newKeyword;
 
+    // Sync with base_content
+    const currentBaseContent = business.baseContent || {};
+    const nextBaseContent = {
+        ...currentBaseContent,
+        keywords: updatedKeywords
+    };
+
     const sql = neon(process.env.DATABASE_URL!);
     await sql`
     UPDATE businesses 
-    SET keywords = ${JSON.stringify(updatedKeywords)}, updated_at = now() 
+    SET keywords = ${JSON.stringify(updatedKeywords)}, 
+        base_content = ${JSON.stringify(nextBaseContent)},
+        updated_at = now() 
     WHERE id = ${business.id}
   `;
 
@@ -109,10 +131,19 @@ export async function deleteKeyword(keywordToDelete: string) {
     const currentKeywords = Array.isArray(business.keywords) ? business.keywords : [];
     const updatedKeywords = currentKeywords.filter(k => k !== keywordToDelete);
 
+    // Sync with base_content
+    const currentBaseContent = business.baseContent || {};
+    const nextBaseContent = {
+        ...currentBaseContent,
+        keywords: updatedKeywords
+    };
+
     const sql = neon(process.env.DATABASE_URL!);
     await sql`
     UPDATE businesses 
-    SET keywords = ${JSON.stringify(updatedKeywords)}, updated_at = now() 
+    SET keywords = ${JSON.stringify(updatedKeywords)}, 
+        base_content = ${JSON.stringify(nextBaseContent)},
+        updated_at = now() 
     WHERE id = ${business.id}
   `;
 

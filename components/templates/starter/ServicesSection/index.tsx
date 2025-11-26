@@ -20,7 +20,7 @@ import {
 
 type ServiceItem = {
     title: string;
-    description: string;
+    description?: string;
     icon?: string;
 };
 
@@ -114,7 +114,7 @@ export function ServicesSection({ data }: { data?: ServicesSectionData }) {
                                         <h3 className="text-xl font-bold mb-2 group-hover:text-primary transition-colors">
                                             {service.title}
                                         </h3>
-                                        <p className="text-muted-foreground">{service.description}</p>
+                                        {service.description && <p className="text-muted-foreground">{service.description}</p>}
                                     </div>
 
                                     {/* Arrow */}
@@ -172,7 +172,7 @@ export function ServicesSection({ data }: { data?: ServicesSectionData }) {
                                     <Icon className="w-7 h-7 text-primary" />
                                 </div>
                                 <h3 className="text-xl font-bold mb-3">{service.title}</h3>
-                                <p className="text-muted-foreground">{service.description}</p>
+                                {service.description && <p className="text-muted-foreground">{service.description}</p>}
                             </Card>
                         );
                     })}

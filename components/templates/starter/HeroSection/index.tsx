@@ -9,6 +9,7 @@ export interface HeroSectionData {
     tagline?: string;
     subtagline?: string;
     hero_image?: string;
+    heroImage?: string; // From BaseWebsiteContent
     cta_primary?: string;
     cta_secondary?: string;
     phone?: string;
@@ -30,13 +31,14 @@ export function HeroSection({ data }: { data?: HeroSectionData }) {
     // Default features if not provided (legacy support)
     const features = data?.features || (variant === 'cleaner' ? ["Fully Insured", "Police Checked", "Eco-Friendly"] : []);
 
+    // Resolve hero image from specific prop or base content
+    const resolvedHeroImage = data?.hero_image || data?.heroImage || "https://images.unsplash.com/photo-1527430253228-e93688616381?q=80&w=1600&auto=format&fit=crop";
+
     // Voltage Variant
     if (variant === 'voltage') {
         const secondaryLabel = canShowPhoneCTA
             ? data?.cta_secondary || data?.phone || "Call Now"
             : data?.cta_secondary;
-
-        const heroImage = data?.hero_image || "https://images.unsplash.com/photo-1527430253228-e93688616381?q=80&w=1600&auto=format&fit=crop";
 
         return (
             <section id="hero" className="relative min-h-screen flex items-center overflow-hidden">
@@ -103,7 +105,7 @@ export function HeroSection({ data }: { data?: HeroSectionData }) {
                         <div className="hidden md:block">
                             <div className="relative aspect-[4/5] rounded-3xl border border-white/10 bg-background/90 shadow-2xl">
                                 <Image
-                                    src={heroImage}
+                                    src={resolvedHeroImage}
                                     alt="Hero visual"
                                     fill
                                     className="object-cover rounded-3xl"
@@ -211,7 +213,7 @@ export function HeroSection({ data }: { data?: HeroSectionData }) {
                     <div className="relative lg:h-[600px] h-[400px] w-full rounded-4xl overflow-hidden shadow-2xl border-4 border-white rotate-1 hover:rotate-0 transition-transform duration-500">
                         <Image
                             fill
-                            src={data?.hero_image || "https://images.unsplash.com/photo-1528740561666-dc2479dc08ab?q=80&w=1600&auto=format&fit=crop"}
+                            src={resolvedHeroImage}
                             alt="Professional"
                             className="object-cover"
                             priority

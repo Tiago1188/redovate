@@ -12,6 +12,9 @@ export interface AboutSectionData {
     certifications_title?: string;
     certifications?: string[];
     image?: string;
+    aboutShort?: string; // From BaseWebsiteContent
+    aboutFull?: string; // From BaseWebsiteContent
+    heroImage?: string; // From BaseWebsiteContent
     variant?: 'cleaner' | 'voltage' | 'default';
 }
 
@@ -29,7 +32,10 @@ export function AboutSection({ data }: { data?: AboutSectionData }) {
     const features = data?.features ?? [];
     const certifications = data?.certifications ?? [];
     const variant = data?.variant || 'cleaner';
-    const image = data?.image || "https://images.unsplash.com/photo-1556911220-e15b29be8c8f?q=80&auto=format&fit=crop&w=1200";
+
+    // Fallback to base content
+    const image = data?.image || data?.heroImage || "https://images.unsplash.com/photo-1556911220-e15b29be8c8f?q=80&auto=format&fit=crop&w=1200";
+    const body = data?.body || data?.aboutFull || data?.aboutShort || "We deliver professional services with a commitment to quality, safety, and customer satisfaction.";
 
     // Voltage Variant - Stats and Professional Layout
     if (variant === 'voltage') {
@@ -70,8 +76,7 @@ export function AboutSection({ data }: { data?: AboutSectionData }) {
 
                             <div className="space-y-4 text-lg text-muted-foreground mb-8">
                                 <p>
-                                    {data?.body ??
-                                        "We deliver professional services with a commitment to quality, safety, and customer satisfaction."}
+                                    {body}
                                 </p>
                                 {data?.body_2 && <p>{data.body_2}</p>}
                             </div>
@@ -148,8 +153,7 @@ export function AboutSection({ data }: { data?: AboutSectionData }) {
 
                         <div className="space-y-6 text-lg text-muted-foreground mb-8">
                             <p>
-                                {data?.body ??
-                                    "We pride ourselves on delivering exceptional service with a focus on safety, reliability, and customer satisfaction."}
+                                {body}
                             </p>
                             {data?.body_2 && <p>{data.body_2}</p>}
                         </div>

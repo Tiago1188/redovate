@@ -22,6 +22,8 @@ interface RegistryRendererProps {
         background: string;
         foreground: string;
     };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    baseContent?: any;
 }
 
 export default function RegistryRenderer({
@@ -31,6 +33,7 @@ export default function RegistryRenderer({
     customTheme,
     customFont,
     customColors,
+    baseContent = {},
 }: RegistryRendererProps) {
 
     // Determine the base theme class
@@ -64,7 +67,10 @@ export default function RegistryRenderer({
                     // Data resolution:
                     // 1. data[section.id] (specific instance data - preferred for business.sections)
                     // 2. data[section.type] (fallback to type-based data - legacy/template default)
-                    const sectionData = (section.id ? data[section.id] : undefined) || data[section.type];
+                    const specificData = (section.id ? data[section.id] : undefined) || data[section.type] || {};
+
+                    // Merge baseContent with specificData. specificData takes precedence.
+                    const sectionData = { ...baseContent, ...specificData };
 
                     return <Component key={section.id || i} data={sectionData} />;
                 })}

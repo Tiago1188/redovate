@@ -31,6 +31,7 @@ export interface BusinessData {
     socialLinks: any;
     theme?: any;
     siteContent?: any; // Added site content field
+    baseContent?: any; // Added base content field
     aiGenerationsCount: number;
     aiPeriodStart: Date;
     domain: string | null;
@@ -74,6 +75,7 @@ export async function getBusinessData(): Promise<BusinessData | null> {
                 b.social_links,
                 b.theme,
                 b.site_content,
+                b.base_content,
                 b.images,
                 b.ai_generations_count,
                 b.ai_period_start,
@@ -115,6 +117,7 @@ export async function getBusinessData(): Promise<BusinessData | null> {
             socialLinks: row.social_links || {},
             theme: row.theme || {},
             siteContent: row.site_content || {},
+            baseContent: row.base_content || {},
             images: Array.isArray(row.images) ? row.images : [],
             aiGenerationsCount: row.ai_generations_count || 0,
             aiPeriodStart: row.ai_period_start || new Date(),

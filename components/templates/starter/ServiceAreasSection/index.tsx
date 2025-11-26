@@ -8,6 +8,7 @@ export interface ServiceAreasSectionData {
     heading?: string;
     subheading?: string;
     areas?: string[];
+    serviceAreas?: string[]; // From BaseWebsiteContent
     variant?: 'cleaner' | 'voltage' | 'default';
 }
 
@@ -15,7 +16,7 @@ export function ServiceAreasSection({ data }: { data?: ServiceAreasSectionData }
     const [showAll, setShowAll] = useState(false);
     const variant = data?.variant || 'cleaner';
     const areas =
-        data?.areas ?? ["Sydney CBD", "North Sydney", "Eastern Suburbs", "Inner West", "Parramatta"];
+        data?.areas ?? data?.serviceAreas ?? ["Sydney CBD", "North Sydney", "Eastern Suburbs", "Inner West", "Parramatta"];
 
     const INITIAL_LIMIT = 6;
     const displayedAreas = showAll ? areas : areas.slice(0, INITIAL_LIMIT);

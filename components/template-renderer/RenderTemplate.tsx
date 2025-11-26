@@ -24,6 +24,8 @@ interface RenderTemplateProps {
     background: string;
     foreground: string;
   };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  baseContent?: any;
 }
 
 export default function RenderTemplate({
@@ -34,6 +36,7 @@ export default function RenderTemplate({
   customTheme,
   customFont,
   customColors,
+  baseContent = {},
 }: RenderTemplateProps) {
   // Determine the base theme class
   // If customTheme is provided, use it.
@@ -80,7 +83,10 @@ export default function RenderTemplate({
 
           // Helper to get data for the specific section
           // It tries data[section.type] first, then data[section.id] if available
-          const sectionData = data[section.type] || (section.id ? data[section.id] : undefined);
+          const specificData = data[section.type] || (section.id ? data[section.id] : undefined) || {};
+
+          // Merge baseContent with specificData. specificData takes precedence.
+          const sectionData = { ...baseContent, ...specificData };
 
           return <Component key={i} data={sectionData} />;
         })}
