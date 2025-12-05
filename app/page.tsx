@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
 import { getBusinessForUser } from "@/actions/businesses";
+import { syncUser } from "@/actions/user";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +17,14 @@ export default async function HomePage() {
       // User has completed onboarding, go to dashboard
       redirect("/dashboard");
     } else {
-      // User hasn't completed onboarding
+      // Check if user has a plan selected
+      const user = await syncUser();
+      
+      if (!user || !user.plan_type) {
+        redirect("/select-plan");
+      }
+
+      // User hasn't completed onboarding but has plan
       redirect("/onboarding");
     }
   }

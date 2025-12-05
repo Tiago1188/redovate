@@ -8,7 +8,7 @@ export interface User {
   email: string;
   full_name?: string;
   role: UserRole;
-  plan_type: PlanType;
+  plan_type: PlanType | null;
   last_login?: Date;
   created_at: Date;
   updated_at: Date;

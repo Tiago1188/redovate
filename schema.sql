@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS users(
     email TEXT NOT NULL,
     full_name TEXT,
     role TEXT DEFAULT 'user',
-    plan_type plan_type_enum DEFAULT 'free',
+    plan_type plan_type_enum,
     last_login TIMESTAMP,
     created_at TIMESTAMP DEFAULT now(),
     updated_at TIMESTAMP DEFAULT now()
