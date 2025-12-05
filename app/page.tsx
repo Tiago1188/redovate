@@ -1,6 +1,27 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { auth } from "@clerk/nextjs/server";
+import { getBusinessForUser } from "@/actions/businesses";
 
-export default function HomePage() {
+export const dynamic = "force-dynamic";
+
+export default async function HomePage() {
+  const { userId } = await auth();
+
+  // If user is logged in, redirect based on onboarding status
+  if (userId) {
+    const business = await getBusinessForUser();
+    
+    if (business) {
+      // User has completed onboarding, go to dashboard
+      redirect("/dashboard");
+    } else {
+      // User hasn't completed onboarding
+      redirect("/onboarding");
+    }
+  }
+
+  // Not logged in - show landing page
   return (
     <main className="min-h-screen bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900">
       <div className="container mx-auto px-4 py-20">
@@ -30,4 +51,3 @@ export default function HomePage() {
     </main>
   );
 }
-
