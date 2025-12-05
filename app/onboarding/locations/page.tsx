@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Search, X, MapPin, ArrowRight, ArrowLeft, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 interface ServiceArea {
@@ -174,10 +175,10 @@ export default function LocationsPage() {
     <div className="flex-1 flex items-center justify-center p-4 py-12">
       <div className="max-w-xl w-full">
         <div className="text-center mb-10">
-          <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-3 tracking-tight">
+          <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3 tracking-tight">
             Service Areas
           </h1>
-          <p className="text-base text-slate-600">
+          <p className="text-base text-muted-foreground">
             Search and add the suburbs or areas where you provide services
           </p>
         </div>
@@ -185,14 +186,14 @@ export default function LocationsPage() {
         {/* Search Input */}
         <div className="relative mb-6">
           <div className="relative">
-            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground">
               {isLoading ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
               ) : (
                 <Search className="w-5 h-5" />
               )}
             </div>
-            <input
+            <Input
               ref={inputRef}
               type="text"
               value={searchQuery}
@@ -203,9 +204,7 @@ export default function LocationsPage() {
               onFocus={() => searchQuery && setShowDropdown(true)}
               placeholder="Search for a suburb, city, or region..."
               className={cn(
-                "w-full pl-12 pr-4 py-4 rounded-2xl border bg-white text-slate-900",
-                "border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20",
-                "placeholder:text-slate-400 transition-all duration-200 text-base"
+                "w-full pl-12 pr-4 py-4 rounded-2xl h-auto text-base"
               )}
             />
           </div>
@@ -214,14 +213,14 @@ export default function LocationsPage() {
           {showDropdown && predictions.length > 0 && (
             <div
               ref={dropdownRef}
-              className="absolute z-10 w-full mt-2 bg-white rounded-xl border border-slate-200 shadow-lg overflow-hidden"
+              className="absolute z-10 w-full mt-2 bg-card rounded-xl border border-border shadow-lg overflow-hidden"
             >
               {predictions.map((prediction) => (
                 <button
                   key={prediction.place_id}
                   onClick={() => handleSelectPlace(prediction)}
                   className={cn(
-                    "w-full px-4 py-3 text-left flex items-start gap-3 hover:bg-slate-50 transition-colors",
+                    "w-full px-4 py-3 text-left flex items-start gap-3 hover:bg-accent hover:text-accent-foreground transition-colors",
                     serviceAreas.some((a) => a.placeId === prediction.place_id) &&
                       "opacity-50 cursor-not-allowed"
                   )}
@@ -229,12 +228,12 @@ export default function LocationsPage() {
                     (a) => a.placeId === prediction.place_id
                   )}
                 >
-                  <MapPin className="w-5 h-5 text-slate-400 mt-0.5 flex-shrink-0" />
+                  <MapPin className="w-5 h-5 text-muted-foreground mt-0.5 flex-shrink-0" />
                   <div className="min-w-0">
-                    <p className="font-medium text-slate-900 truncate">
+                    <p className="font-medium text-foreground truncate">
                       {prediction.structured_formatting.main_text}
                     </p>
-                    <p className="text-sm text-slate-500 truncate">
+                    <p className="text-sm text-muted-foreground truncate">
                       {prediction.structured_formatting.secondary_text}
                     </p>
                   </div>
@@ -247,7 +246,7 @@ export default function LocationsPage() {
         {/* Selected Areas as Badges */}
         {serviceAreas.length > 0 && (
           <div className="mb-8">
-            <p className="text-sm font-medium text-slate-700 mb-3">
+            <p className="text-sm font-medium text-foreground mb-3">
               Selected areas ({serviceAreas.length})
             </p>
             <div className="flex flex-wrap gap-2">
@@ -256,19 +255,19 @@ export default function LocationsPage() {
                   key={area.placeId}
                   className={cn(
                     "inline-flex items-center gap-2 px-4 py-2 rounded-full",
-                    "bg-blue-50 text-blue-700 border border-blue-200",
+                    "bg-primary/10 text-primary border border-primary/20",
                     "text-sm font-medium transition-all duration-200",
-                    "hover:bg-blue-100"
+                    "hover:bg-primary/20"
                   )}
                 >
                   <MapPin className="w-4 h-4" />
                   <span>{area.name}</span>
                   {area.postcode && (
-                    <span className="text-blue-500">({area.postcode})</span>
+                    <span className="text-primary/80">({area.postcode})</span>
                   )}
                   <button
                     onClick={() => removeArea(area.placeId)}
-                    className="ml-1 p-0.5 rounded-full hover:bg-blue-200 transition-colors"
+                    className="ml-1 p-0.5 rounded-full hover:bg-primary/20 transition-colors"
                     aria-label={`Remove ${area.name}`}
                   >
                     <X className="w-4 h-4" />
@@ -281,9 +280,9 @@ export default function LocationsPage() {
 
         {/* Empty State */}
         {serviceAreas.length === 0 && (
-          <div className="text-center py-8 px-4 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 mb-8">
-            <MapPin className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-            <p className="text-slate-500">
+          <div className="text-center py-8 px-4 bg-muted/50 rounded-2xl border-2 border-dashed border-border mb-8">
+            <MapPin className="w-10 h-10 text-muted-foreground/50 mx-auto mb-3" />
+            <p className="text-muted-foreground">
               No service areas added yet. Start typing to search.
             </p>
           </div>
@@ -295,7 +294,7 @@ export default function LocationsPage() {
             type="button"
             variant="outline"
             onClick={() => router.back()}
-            className="px-6 h-12 rounded-xl border-slate-200 text-slate-700 hover:bg-slate-50"
+            className="px-6 h-12 rounded-xl border-input text-foreground hover:bg-accent hover:text-accent-foreground"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back
@@ -305,9 +304,9 @@ export default function LocationsPage() {
             disabled={serviceAreas.length === 0}
             className={cn(
               "px-8 h-12 rounded-xl",
-              "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700",
-              "text-white shadow-md shadow-blue-600/20",
-              "disabled:from-slate-300 disabled:to-slate-300 disabled:shadow-none"
+              "bg-primary hover:bg-primary/90",
+              "text-primary-foreground shadow-md",
+              "disabled:opacity-50 disabled:shadow-none"
             )}
           >
             <span className="flex items-center gap-2">

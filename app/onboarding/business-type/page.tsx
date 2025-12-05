@@ -74,10 +74,10 @@ export default function BusinessTypePage() {
       <div className="max-w-3xl w-full">
         {/* Header */}
         <div className="text-center mb-10">
-          <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-3 tracking-tight">
+          <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3 tracking-tight">
             What type of business are you?
           </h1>
-          <p className="text-base text-slate-600 max-w-lg mx-auto">
+          <p className="text-base text-muted-foreground max-w-lg mx-auto">
             This helps us customize your website and provide the right
             features for your business structure.
           </p>
@@ -91,10 +91,10 @@ export default function BusinessTypePage() {
               onClick={() => setSelected(option.type)}
               className={cn(
                 "relative group text-left p-6 rounded-2xl border transition-all duration-200",
-                "bg-white hover:shadow-lg hover:shadow-slate-200/50",
+                "bg-card hover:shadow-lg hover:shadow-primary/5",
                 selected === option.type
-                  ? "border-blue-600 ring-1 ring-blue-600 shadow-lg shadow-blue-100/50"
-                  : "border-slate-200 hover:border-slate-300"
+                  ? "border-primary ring-1 ring-primary shadow-lg shadow-primary/10"
+                  : "border-border hover:border-primary/50"
               )}
             >
               {/* Selection indicator */}
@@ -102,8 +102,8 @@ export default function BusinessTypePage() {
                 className={cn(
                   "absolute top-4 right-4 w-6 h-6 rounded-full flex items-center justify-center transition-all duration-200",
                   selected === option.type
-                    ? "bg-blue-600 text-white"
-                    : "border-2 border-slate-200 bg-white"
+                    ? "bg-primary text-primary-foreground"
+                    : "border-2 border-border bg-card"
                 )}
               >
                 {selected === option.type && <Check className="w-4 h-4" />}
@@ -114,8 +114,8 @@ export default function BusinessTypePage() {
                 className={cn(
                   "w-14 h-14 rounded-xl flex items-center justify-center mb-4 transition-colors duration-200",
                   selected === option.type
-                    ? "bg-gradient-to-br from-blue-600 to-indigo-600 text-white"
-                    : "bg-slate-100 text-slate-600 group-hover:bg-blue-50 group-hover:text-blue-600"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary"
                 )}
               >
                 {option.icon}
@@ -123,15 +123,15 @@ export default function BusinessTypePage() {
 
               {/* Title & Subtitle */}
               <div className="mb-3 pr-8">
-                <h3 className="text-lg font-semibold text-slate-900 mb-0.5">
+                <h3 className="text-lg font-semibold text-foreground mb-0.5">
                   {option.title}
                 </h3>
                 <p
                   className={cn(
                     "text-sm font-medium transition-colors",
                     selected === option.type
-                      ? "text-blue-600"
-                      : "text-slate-500"
+                      ? "text-primary"
+                      : "text-muted-foreground"
                   )}
                 >
                   {option.subtitle}
@@ -139,7 +139,7 @@ export default function BusinessTypePage() {
               </div>
 
               {/* Description */}
-              <p className="text-sm text-slate-600 mb-4 leading-relaxed">
+              <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
                 {option.description}
               </p>
 
@@ -148,14 +148,14 @@ export default function BusinessTypePage() {
                 {option.features.map((feature, idx) => (
                   <li
                     key={idx}
-                    className="flex items-center gap-2 text-sm text-slate-500"
+                    className="flex items-center gap-2 text-sm text-muted-foreground"
                   >
                     <div
                       className={cn(
                         "w-1 h-1 rounded-full transition-colors",
                         selected === option.type
-                          ? "bg-blue-600"
-                          : "bg-slate-300"
+                          ? "bg-primary"
+                          : "bg-muted-foreground/30"
                       )}
                     />
                     {feature}
@@ -174,9 +174,9 @@ export default function BusinessTypePage() {
             size="lg"
             className={cn(
               "px-8 h-12 text-base font-medium rounded-xl transition-all duration-200",
-              "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700",
-              "text-white shadow-md shadow-blue-600/20 hover:shadow-lg hover:shadow-blue-600/30",
-              "disabled:from-slate-300 disabled:to-slate-300 disabled:shadow-none disabled:text-slate-500"
+              "bg-primary hover:bg-primary/90",
+              "text-primary-foreground shadow-md",
+              "disabled:opacity-50 disabled:shadow-none"
             )}
           >
             {isNavigating ? (

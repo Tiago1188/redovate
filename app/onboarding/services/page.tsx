@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, X, ArrowRight, ArrowLeft, Wrench, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 export default function ServicesPage() {
@@ -65,13 +66,13 @@ export default function ServicesPage() {
     <div className="flex-1 flex items-center justify-center p-4 py-12">
       <div className="max-w-xl w-full">
         <div className="text-center mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-3 tracking-tight">
+          <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3 tracking-tight">
             Your Services
           </h1>
-          <p className="text-base text-slate-600 mb-4">
+          <p className="text-base text-muted-foreground mb-4">
             Add at least 3 services you offer to your customers
           </p>
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 text-blue-700 text-sm">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm">
             <Sparkles className="w-4 h-4" />
             Don&apos;t worry about descriptions — our AI will generate them for you!
           </div>
@@ -80,10 +81,10 @@ export default function ServicesPage() {
         {/* Service Input */}
         <div className="relative mb-6">
           <div className="relative">
-            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground">
               <Wrench className="w-5 h-5" />
             </div>
-            <input
+            <Input
               ref={inputRef}
               type="text"
               value={inputValue}
@@ -91,9 +92,7 @@ export default function ServicesPage() {
               onKeyDown={handleKeyDown}
               placeholder="Type a service name and press Enter..."
               className={cn(
-                "w-full pl-12 pr-14 py-4 rounded-2xl border bg-white text-slate-900",
-                "border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20",
-                "placeholder:text-slate-400 transition-all duration-200 text-base"
+                "w-full pl-12 pr-14 py-4 rounded-2xl h-auto text-base"
               )}
             />
             <button
@@ -102,8 +101,8 @@ export default function ServicesPage() {
               className={cn(
                 "absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-xl transition-all duration-200",
                 inputValue.trim()
-                  ? "bg-blue-600 text-white hover:bg-blue-700"
-                  : "bg-slate-100 text-slate-400 cursor-not-allowed"
+                  ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                  : "bg-muted text-muted-foreground cursor-not-allowed"
               )}
             >
               <Plus className="w-5 h-5" />
@@ -114,10 +113,10 @@ export default function ServicesPage() {
         {/* Selected Services as Badges */}
         {services.length > 0 && (
           <div className="mb-8">
-            <p className="text-sm font-medium text-slate-700 mb-3">
+            <p className="text-sm font-medium text-foreground mb-3">
               Added services ({services.length})
               {services.length < 3 && (
-                <span className="text-slate-400 font-normal">
+                <span className="text-muted-foreground font-normal">
                   {" "}— add {3 - services.length} more
                 </span>
               )}
@@ -128,16 +127,16 @@ export default function ServicesPage() {
                   key={service}
                   className={cn(
                     "inline-flex items-center gap-2 px-4 py-2 rounded-full",
-                    "bg-blue-50 text-blue-700 border border-blue-200",
+                    "bg-primary/10 text-primary border border-primary/20",
                     "text-sm font-medium transition-all duration-200",
-                    "hover:bg-blue-100"
+                    "hover:bg-primary/20"
                   )}
                 >
                   <Wrench className="w-4 h-4" />
                   <span>{service}</span>
                   <button
                     onClick={() => removeService(service)}
-                    className="ml-1 p-0.5 rounded-full hover:bg-blue-200 transition-colors"
+                    className="ml-1 p-0.5 rounded-full hover:bg-primary/20 transition-colors"
                     aria-label={`Remove ${service}`}
                   >
                     <X className="w-4 h-4" />
@@ -150,10 +149,10 @@ export default function ServicesPage() {
 
         {/* Empty State */}
         {services.length === 0 && (
-          <div className="text-center py-8 px-4 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 mb-8">
-            <Wrench className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-            <p className="text-slate-500 mb-2">No services added yet</p>
-            <p className="text-sm text-slate-400">
+          <div className="text-center py-8 px-4 bg-muted/50 rounded-2xl border-2 border-dashed border-border mb-8">
+            <Wrench className="w-10 h-10 text-muted-foreground/50 mx-auto mb-3" />
+            <p className="text-muted-foreground mb-2">No services added yet</p>
+            <p className="text-sm text-muted-foreground/80">
               Type a service name above and press Enter to add
             </p>
           </div>
@@ -165,7 +164,7 @@ export default function ServicesPage() {
             type="button"
             variant="outline"
             onClick={() => router.back()}
-            className="px-6 h-12 rounded-xl border-slate-200 text-slate-700 hover:bg-slate-50"
+            className="px-6 h-12 rounded-xl border-input text-foreground hover:bg-accent hover:text-accent-foreground"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back
@@ -175,9 +174,9 @@ export default function ServicesPage() {
             disabled={services.length < 3}
             className={cn(
               "px-8 h-12 rounded-xl",
-              "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700",
-              "text-white shadow-md shadow-blue-600/20",
-              "disabled:from-slate-300 disabled:to-slate-300 disabled:shadow-none"
+              "bg-primary hover:bg-primary/90",
+              "text-primary-foreground shadow-md",
+              "disabled:opacity-50 disabled:shadow-none"
             )}
           >
             <span className="flex items-center gap-2">
