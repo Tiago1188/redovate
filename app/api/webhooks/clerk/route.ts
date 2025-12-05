@@ -56,7 +56,7 @@ export async function POST(req: Request) {
   console.log("Webhook body:", body);
 
   if (eventType === "user.created" || eventType === "user.updated") {
-    const { id, email_addresses, first_name, last_name, image_url } = evt.data;
+    const { id, email_addresses, first_name, last_name } = evt.data;
 
     if (!id || !email_addresses) {
       return new Response("Error occured -- missing data", {

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Check, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -14,7 +13,6 @@ import type { PlanType } from "@/types";
 import { cn } from "@/lib/utils";
 
 export function PlanSelection() {
-  const router = useRouter();
   const [selectedPlan, setSelectedPlan] = useState<PlanType | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -40,7 +38,7 @@ export function PlanSelection() {
         toast.error(result.error || "Failed to select plan");
         setLoading(false);
       }
-    } catch (error) {
+    } catch {
       toast.error("Something went wrong");
       setLoading(false);
     }
