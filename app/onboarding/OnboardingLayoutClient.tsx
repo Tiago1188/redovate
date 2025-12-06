@@ -51,29 +51,15 @@ export default function OnboardingLayout({
             Start building your digital presence today.
           </h2>
           <div className="space-y-4">
-            <div className="flex items-start gap-4 p-4 rounded-xl bg-surface-muted/50 border border-sidebar-border/50 backdrop-blur-sm">
-              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                <span className="font-bold">1</span>
-              </div>
-              <div>
-                <h3 className="font-medium text-foreground">Tell us about your business</h3>
-                <p className="text-sm text-muted-foreground mt-1">We'll assume the structure and needs based on your trade.</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-4 p-4 rounded-xl bg-surface-muted/50 border border-sidebar-border/50 backdrop-blur-sm">
-              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                <span className="font-bold">2</span>
-              </div>
-              <div>
-                <h3 className="font-medium text-foreground">Select your services</h3>
-                <p className="text-sm text-muted-foreground mt-1">Our AI will generate service pages for you automatically.</p>
-              </div>
+            <div>
+              <h3 className="font-medium text-foreground">Select your services</h3>
+              <p className="text-sm text-muted-foreground mt-1">Our AI will generate service pages for you automatically.</p>
             </div>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="relative z-10 flex items-center gap-4 text-xs text-muted-foreground">
+        <div className="relative z-10 flex items-center gap-4 text-xs text-muted-foreground mt-8">
           <span>© 2025 Redovate</span>
           <span className="w-1 h-1 rounded-full bg-border" />
           <span>Privacy Policy</span>
@@ -121,6 +107,6 @@ export default function OnboardingLayout({
           </div>
         </main>
       </div>
-    </div>
+    </div >
   );
 }

@@ -1,26 +1,20 @@
 "use client";
-
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
     Home,
-    CreditCard,
-    ArrowRightLeft,
+    Settings,
     Users,
     Package,
-    Settings,
-    X,
-    Menu
+    ArrowRightLeft,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 const sidebarItems = [
     {
         title: "Overview",
         items: [
             { name: "Home", href: "/dashboard", icon: Home },
-            { name: "Balances", href: "/dashboard/balances", icon: CreditCard },
             { name: "Transactions", href: "/dashboard/transactions", icon: ArrowRightLeft },
         ],
     },
