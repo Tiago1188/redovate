@@ -63,128 +63,126 @@ export default function ServicesPage() {
   };
 
   return (
-    <div className="flex-1 flex items-center justify-center p-4 py-12">
-      <div className="max-w-xl w-full">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3 tracking-tight">
-            Your Services
-          </h1>
-          <p className="text-base text-muted-foreground mb-4">
-            Add at least 3 services you offer to your customers
-          </p>
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm">
-            <Sparkles className="w-4 h-4" />
-            Don&apos;t worry about descriptions — our AI will generate them for you!
-          </div>
+    <div className="w-full">
+      <div className="mb-8">
+        <h1 className="text-3xl font-semibold text-foreground mb-3 tracking-tight">
+          Your Services
+        </h1>
+        <p className="text-base text-muted-foreground mb-4">
+          Add at least 3 services you offer to your customers
+        </p>
+        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium">
+          <Sparkles className="w-4 h-4" />
+          Don&apos;t worry about descriptions — our AI will generate them for you!
         </div>
+      </div>
 
-        {/* Service Input */}
-        <div className="relative mb-6">
-          <div className="relative">
-            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground">
-              <Wrench className="w-5 h-5" />
-            </div>
-            <Input
-              ref={inputRef}
-              type="text"
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Type a service name and press Enter..."
-              className={cn(
-                "w-full pl-12 pr-14 py-4 rounded-2xl h-auto text-base"
-              )}
-            />
-            <button
-              onClick={addService}
-              disabled={!inputValue.trim()}
-              className={cn(
-                "absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-xl transition-all duration-200",
-                inputValue.trim()
-                  ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                  : "bg-muted text-muted-foreground cursor-not-allowed"
-              )}
-            >
-              <Plus className="w-5 h-5" />
-            </button>
+      {/* Service Input */}
+      <div className="relative mb-8">
+        <div className="relative group">
+          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors duration-200">
+            <Wrench className="w-5 h-5" />
           </div>
-        </div>
-
-        {/* Selected Services as Badges */}
-        {services.length > 0 && (
-          <div className="mb-8">
-            <p className="text-sm font-medium text-foreground mb-3">
-              Added services ({services.length})
-              {services.length < 3 && (
-                <span className="text-muted-foreground font-normal">
-                  {" "}— add {3 - services.length} more
-                </span>
-              )}
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {services.map((service) => (
-                <div
-                  key={service}
-                  className={cn(
-                    "inline-flex items-center gap-2 px-4 py-2 rounded-full",
-                    "bg-primary/10 text-primary border border-primary/20",
-                    "text-sm font-medium transition-all duration-200",
-                    "hover:bg-primary/20"
-                  )}
-                >
-                  <Wrench className="w-4 h-4" />
-                  <span>{service}</span>
-                  <button
-                    onClick={() => removeService(service)}
-                    className="ml-1 p-0.5 rounded-full hover:bg-primary/20 transition-colors"
-                    aria-label={`Remove ${service}`}
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Empty State */}
-        {services.length === 0 && (
-          <div className="text-center py-8 px-4 bg-muted/50 rounded-2xl border-2 border-dashed border-border mb-8">
-            <Wrench className="w-10 h-10 text-muted-foreground/50 mx-auto mb-3" />
-            <p className="text-muted-foreground mb-2">No services added yet</p>
-            <p className="text-sm text-muted-foreground/80">
-              Type a service name above and press Enter to add
-            </p>
-          </div>
-        )}
-
-        {/* Navigation Buttons */}
-        <div className="flex justify-between pt-4">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => router.back()}
-            className="px-6 h-12 rounded-xl border-input text-foreground hover:bg-accent hover:text-accent-foreground"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back
-          </Button>
-          <Button
-            onClick={handleContinue}
-            disabled={services.length < 3}
+          <Input
+            ref={inputRef}
+            type="text"
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Type a service name and press Enter..."
             className={cn(
-              "px-8 h-12 rounded-xl",
-              "bg-primary hover:bg-primary/90",
-              "text-primary-foreground shadow-md",
-              "disabled:opacity-50 disabled:shadow-none"
+              "w-full pl-12 pr-14 py-6 rounded-2xl h-auto text-base shadow-sm border-border/60 focus:ring-4 focus:ring-primary/10 transition-all duration-300"
+            )}
+          />
+          <button
+            onClick={addService}
+            disabled={!inputValue.trim()}
+            className={cn(
+              "absolute right-3 top-1/2 -translate-y-1/2 p-2.5 rounded-xl transition-all duration-200",
+              inputValue.trim()
+                ? "bg-primary text-primary-foreground hover:bg-primary/90 shadow-md transform hover:scale-105"
+                : "bg-surface-muted text-muted-foreground cursor-not-allowed"
             )}
           >
-            <span className="flex items-center gap-2">
-              Continue
-              <ArrowRight className="w-4 h-4" />
-            </span>
-          </Button>
+            <Plus className="w-5 h-5" />
+          </button>
         </div>
+      </div>
+
+      {/* Selected Services as Badges */}
+      {services.length > 0 && (
+        <div className="mb-8">
+          <p className="text-sm font-medium text-foreground mb-3">
+            Added services ({services.length})
+            {services.length < 3 && (
+              <span className="text-muted-foreground font-normal">
+                {" "}— add {3 - services.length} more
+              </span>
+            )}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {services.map((service) => (
+              <div
+                key={service}
+                className={cn(
+                  "inline-flex items-center gap-2 px-4 py-2 rounded-full",
+                  "bg-primary/10 text-primary border border-primary/20",
+                  "text-sm font-medium transition-all duration-200",
+                  "hover:bg-primary/20"
+                )}
+              >
+                <Wrench className="w-4 h-4" />
+                <span>{service}</span>
+                <button
+                  onClick={() => removeService(service)}
+                  className="ml-1 p-0.5 rounded-full hover:bg-primary/20 transition-colors"
+                  aria-label={`Remove ${service}`}
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Empty State */}
+      {services.length === 0 && (
+        <div className="text-center py-12 px-4 bg-surface-muted/50 rounded-2xl border-2 border-dashed border-border/60 mb-8">
+          <Wrench className="w-10 h-10 text-muted-foreground/50 mx-auto mb-3" />
+          <p className="text-muted-foreground mb-2 font-medium">No services added yet</p>
+          <p className="text-sm text-muted-foreground/80">
+            Type a service name above and press Enter to add
+          </p>
+        </div>
+      )}
+
+      {/* Navigation Buttons */}
+      <div className="flex justify-between pt-6">
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={() => router.back()}
+          className="px-6 h-12 text-muted-foreground hover:text-foreground hover:bg-surface-muted/50"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back
+        </Button>
+        <Button
+          onClick={handleContinue}
+          disabled={services.length < 3}
+          className={cn(
+            "px-8 h-12 text-base font-medium rounded-xl transition-all duration-200",
+            "bg-primary hover:bg-primary/90",
+            "text-primary-foreground shadow-premium hover:shadow-premium-hover",
+            "disabled:opacity-50 disabled:shadow-none min-w-[140px]"
+          )}
+        >
+          <span className="flex items-center gap-2">
+            Continue
+            <ArrowRight className="w-4 h-4" />
+          </span>
+        </Button>
       </div>
     </div>
   );
